@@ -1,4 +1,4 @@
-use crate::parseable::Parseable;
+use crate::parseable::{Parseable, Result};
 
 use std::io::{BufReader, Read};
 
@@ -14,19 +14,19 @@ pub type LocalIdx = u32;
 pub type LabelIdx = u32;
 
 impl<T: Parseable> Parseable for Vec<T> {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Self {
-        let num: Size = Size::parse(reader);
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Vec<T>> {
+        let num: Size = Size::parse(reader)?;
         let mut vec: Vec<T> = Vec::new();
         for _ in 0..num {
-            let elem: T = T::parse(reader);
+            let elem: T = T::parse(reader)?;
             vec.push(elem);
         }
-        vec
+        Ok(vec)
     }
 }
 
 impl Parseable for u32 {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Self {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<u32> {
         let mut num: u32 = 0;
         let mut shift: u32 = 0;
         let mut buf: [u8; 1] = [0];
@@ -40,7 +40,7 @@ impl Parseable for u32 {
             }
             shift += 7;
         }
-        num
+        Ok(num)
     }
 }
 
@@ -55,7 +55,7 @@ impl Parseable for i32 {
     //    0x78     0xBB     0xC0  In hexadecimal
     //
     //→ 0xC0 0xBB 0x78            Output stream (LSB to MSB)
-    fn parse(reader: &mut BufReader<dyn Read>) -> Self {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<i32> {
         let mut num: i32 = 0;
         let mut shift: u32 = 0;
         let mut buf: [u8; 1] = [0];
@@ -75,18 +75,18 @@ impl Parseable for i32 {
         if shift < (i32_size * 8) && val & 0x40 != 0 {
             num |= -(1 << shift);
         }
-        num
+        Ok(num)
     }
 }
 
 impl Parseable for u64 {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Self {
-        0
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<u64> {
+        Ok(0)
     }
 }
 
 impl Parseable for i64 {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Self {
-        0
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<i64> {
+        Ok(0)
     }
 }

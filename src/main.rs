@@ -6,17 +6,17 @@ mod parseable;
 mod types;
 mod module;
 
-use crate::parseable::Parseable;
+use crate::parseable::{Parseable, Result};
 use crate::module::Module;
 
 use std::io::{self, BufReader, prelude::*};
 use std::fs::File;
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
     let file_path = "funcs.wasm";
     let file = File::open(file_path)?;
     let mut reader = BufReader::new(file);
-    let module = Module::parse(&mut reader);
+    let module = Module::parse(&mut reader)?;
     
     println!("Version: {}", module.version);
     Ok(())
