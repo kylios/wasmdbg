@@ -1,9 +1,11 @@
 use std::io::{self, BufReader, Read};
 
 use crate::parseable::{Parseable, Result, ParseError};
+// use crate::section::Section;
 
 pub struct Module {
-    pub version: u32
+    pub version: u32/* ,
+    pub sections: Vec<dyn Section> */
 }
 
 impl Module {

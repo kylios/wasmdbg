@@ -15,7 +15,7 @@ pub type LabelIdx = u32;
 
 impl<T: Parseable> Parseable for Vec<T> {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Vec<T>> {
-        let num: Size = Size::parse(reader)?;
+        let num = Leb128::<Size>::parse(reader)?.val;
         let mut vec: Vec<T> = Vec::new();
         for _ in 0..num {
             let elem: T = T::parse(reader)?;
@@ -27,6 +27,18 @@ impl<T: Parseable> Parseable for Vec<T> {
 
 impl Parseable for u32 {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<u32> {
+        let mut buf: [u8; 4] = [0; 4];
+        reader.read(&mut buf[..]).unwrap();
+        Ok(u32::from_le_bytes(buf))
+    }
+}
+
+pub struct Leb128<T> {
+    pub val: T
+}
+
+impl Parseable for Leb128<u32> {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<u32>> {
         let mut num: u32 = 0;
         let mut shift: u32 = 0;
         let mut buf: [u8; 1] = [0];
@@ -40,11 +52,27 @@ impl Parseable for u32 {
             }
             shift += 7;
         }
-        Ok(num)
+        Ok(Leb128 {
+            val: num
+        })
     }
 }
 
-impl Parseable for i32 {
+impl From<Leb128<u32>> for u32  {
+    fn from(value: Leb128<u32>) -> Self {
+        value.val
+    }
+}
+
+// TODO: can we more elegantly convert a 
+// vector of LEB types to their natural types?
+/* impl<T> From<Vec<Leb128<T>>> for Vec<T> {
+    fn from(value: Vec<Leb128<T>>) -> Self {
+        value.iter().map(|v| v.val).collect()
+    }
+} */
+
+impl Parseable for Leb128<i32> {
     //    MSB ------------------ LSB
     //         11110001001000000  Binary encoding of 123456
     //     000011110001001000000  As a 21-bit number
@@ -55,7 +83,7 @@ impl Parseable for i32 {
     //    0x78     0xBB     0xC0  In hexadecimal
     //
     //→ 0xC0 0xBB 0x78            Output stream (LSB to MSB)
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<i32> {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<i32>> {
         let mut num: i32 = 0;
         let mut shift: u32 = 0;
         let mut buf: [u8; 1] = [0];
@@ -75,18 +103,42 @@ impl Parseable for i32 {
         if shift < (i32_size * 8) && val & 0x40 != 0 {
             num |= -(1 << shift);
         }
-        Ok(num)
+        Ok(Leb128 {
+            val: num
+        })
     }
 }
 
-impl Parseable for u64 {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<u64> {
-        Ok(0)
+impl From<Leb128<i32>> for i32 {
+    fn from(value: Leb128<i32>) -> Self {
+        value.val
     }
 }
 
-impl Parseable for i64 {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<i64> {
-        Ok(0)
+impl Parseable for Leb128<u64> {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<u64>> {
+        Ok(Leb128 {
+            val: 0
+        })
+    }
+}
+
+impl From<Leb128<u64>> for u64 {
+    fn from(value: Leb128<u64>) -> Self {
+        value.val
+    }
+}
+
+impl Parseable for Leb128<i64> {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<i64>> {
+        Ok(Leb128 {
+            val: 0
+        })
+    }
+}
+
+impl From<Leb128<i64>> for i64 {
+    fn from(value: Leb128<i64>) -> Self {
+        value.val
     }
 }
