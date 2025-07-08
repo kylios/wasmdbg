@@ -1,4 +1,4 @@
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, Result, ParseError};
 
 use std::io::{BufReader, Read};
 
@@ -25,11 +25,36 @@ impl<T: Parseable> Parseable for Vec<T> {
     }
 }
 
+impl Parseable for String {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<String> {
+        let vec = Vec::<u8>::parse(reader)?;
+        let string = String::from_utf8(vec)?;
+        Ok(string)
+    }
+}
+
+impl Parseable for u8 {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        let mut buf: [u8; 1] = [0; 1];
+        let n = reader.read(&mut buf[..]).unwrap();
+        match n {
+            1 => Ok(u8::from_le_bytes(buf)),
+            _ => Err(ParseError::new("Should have read 1 byte"))
+        }
+        
+    }
+}
+
 impl Parseable for u32 {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<u32> {
         let mut buf: [u8; 4] = [0; 4];
-        reader.read(&mut buf[..]).unwrap();
-        Ok(u32::from_le_bytes(buf))
+        let n = reader.read(&mut buf[..]).unwrap();
+        match n {
+            4 => Ok(u32::from_le_bytes(buf)),
+            _ => Err(ParseError::new("Should have read 4 bytes"))
+        }
     }
 }
 
@@ -44,7 +69,10 @@ impl Parseable for Leb128<u32> {
         let mut buf: [u8; 1] = [0];
         let mut val: u8;
         loop {
-            reader.read(&mut buf[..]).unwrap();
+            let n = reader.read(&mut buf[..]).unwrap();
+            if n != 1 {
+                return Err(ParseError::new("Should have read 1 byte"));
+            }
             val = u8::from_le_bytes(buf);
             num += u32::from(val & 127) << shift;
             if val & 128 == 0 {
@@ -90,7 +118,10 @@ impl Parseable for Leb128<i32> {
         let mut val: u8;
 
         loop {
-            reader.read(&mut buf[..]).unwrap();
+            let n = reader.read(&mut buf[..]).unwrap();
+            if n != 1 {
+                return Err(ParseError::new("Should have read 1 byte"));
+            }
             val = u8::from_le_bytes(buf);
             num += i32::from(val & 127) << shift;
             shift += 7;
@@ -108,6 +139,7 @@ impl Parseable for Leb128<i32> {
         })
     }
 }
+
 
 impl From<Leb128<i32>> for i32 {
     fn from(value: Leb128<i32>) -> Self {

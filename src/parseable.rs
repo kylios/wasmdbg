@@ -1,5 +1,6 @@
 use std::io::{BufReader, Read};
 use std::fmt::Debug;
+use std::string::FromUtf8Error;
 
 pub struct ParseError {
     msg: String
@@ -22,6 +23,12 @@ impl From<std::io::Error> for ParseError {
         ParseError {
             msg: value.to_string()
         }
+    }
+}
+
+impl From<FromUtf8Error> for ParseError {
+    fn from(value: FromUtf8Error) -> Self {
+        ParseError { msg: value.to_string() } 
     }
 }
 

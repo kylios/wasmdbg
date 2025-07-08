@@ -1,11 +1,11 @@
-use std::io::{self, BufReader, Read};
+use std::io::{BufReader, Read};
 
 use crate::parseable::{Parseable, Result, ParseError};
-// use crate::section::Section;
+use crate::section::{Section, parse};
 
 pub struct Module {
-    pub version: u32/* ,
-    pub sections: Vec<dyn Section> */
+    pub version: u32,
+    pub sections: Vec<Box<dyn Section>>
 }
 
 impl Module {
@@ -40,8 +40,18 @@ impl Parseable for Module {
         if version != 1 {
             return Err(ParseError::new("Wasm version should be 1"))
         }
+        
+        let mut sections: Vec<Box<dyn Section>> = Vec::<Box<dyn Section>>::new();
+        loop {
+            let section = parse(reader);
+            match section {
+                Ok(section) => sections.push(section),
+                _ => break
+            }
+        }
         Ok(Module {
-            version: version
+            version: version,
+            sections: sections
         })
     }
 }
