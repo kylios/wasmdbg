@@ -10,7 +10,7 @@ mod section;
 use crate::parseable::{Parseable, Result};
 use crate::module::Module;
 
-use std::io::{self, BufReader, prelude::*};
+use std::io::BufReader;
 use std::fs::File;
 
 fn main() -> Result<()> {
@@ -20,5 +20,10 @@ fn main() -> Result<()> {
     let module = Module::parse(&mut reader)?;
     
     println!("Version: {}", module.version);
+    println!("Sections:");
+    for section in module.sections {
+        println!("* {}", section.section_type());
+        println!("  size: {} bytes", section.size());
+    }
     Ok(())
 }

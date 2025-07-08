@@ -12,7 +12,6 @@ mod start;
 mod table;
 mod r#type;
 
-use crate::section;
 use crate::types::{Leb128, Size, TypeIdx};
 use crate::parseable::{Result, Parseable};
 
@@ -34,14 +33,12 @@ const DATA_COUNT_SECTION_ID: TypeIdx = 12;
 
 pub trait Section {
     fn section_type(&self) -> &str;
+    fn size(&self) -> Size;
 }
 
 pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Box<dyn Section>> {
     let section_type = u32::from(u8::parse(reader)?);
     let size = Leb128::<Size>::parse(reader)?.val;
-    
-    println!("Section type: {:#02x}", section_type);
-    println!("Section size: {} bytes", size);
     
     let section: Box<dyn Section> = match section_type {
         CUSTOM_SECTION_ID => custom::parse(size, reader),
@@ -59,7 +56,6 @@ pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Box<dyn Section>> {
         DATA_COUNT_SECTION_ID => data_count::parse(size, reader),
         _ => panic!("Invalid Section Type")
     }?;
-    println!("Found section type '{}'", section.section_type());
     
     Ok(section)
 }

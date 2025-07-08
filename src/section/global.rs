@@ -12,6 +12,10 @@ impl Section for GlobalSection {
     fn section_type(&self) -> &str {
         "global"
     }
+    
+    fn size(&self) -> Size {
+        self.size
+    }
 }
 
 pub fn parse(size: Size, reader: &mut BufReader<dyn Read>) -> Result<Box<dyn Section>> {

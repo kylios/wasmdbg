@@ -14,6 +14,10 @@ impl Section for CustomSection {
     fn section_type(&self) -> &str {
         "custom"
     }
+    
+    fn size(&self) -> Size {
+        self.size
+    }
 }
 
 pub fn parse(size: Size, reader: &mut BufReader<dyn Read>) -> Result<Box<dyn Section>> {
