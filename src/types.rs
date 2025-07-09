@@ -13,6 +13,67 @@ pub type DataIdx = u32;
 pub type LocalIdx = u32;
 pub type LabelIdx = u32;
 
+/* pub enum Type {
+    Val(u8)
+}
+
+const NUMTYPE_I32: Type = Type::Val(0x7f);
+const NUMTYPE_I64: Type = Type::Val(0xfe);
+const NUMTYPE_F32: Type = Type::Val(0xfd);
+const NUMTYPE_F64: Type = Type::Val(0x7c);
+
+const VECTYPE_V128: Type = Type::Val(0x7b);
+
+const REFTYPE_FUNCREF: Type = Type::Val(0x70);
+const REFTYPE_EXTERNREF: Type = Type::Val(0x6f); */
+
+pub enum NumType {
+    I32,
+    I64,
+    F32,
+    F64
+}
+
+pub enum VecType {
+    V128
+}
+
+pub enum RefType {
+    Func,
+    Extern
+}
+
+pub enum ValType {
+    Num(NumType),
+    Vec(VecType),
+    Ref(RefType)
+}
+
+pub type ResultType = Vec<ValType>;
+
+impl Parseable for ValType {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        let mut buf: [u8; 1] = [0; 1];
+        let n = reader.read(&mut buf)?;
+        match n {
+            1 => match u8::from_le_bytes(buf) {
+                0x7f => Ok(ValType::Num(NumType::I32)),
+                0x7e => Ok(ValType::Num(NumType::I64)),
+                0x7d => Ok(ValType::Num(NumType::F32)),
+                0x7c => Ok(ValType::Num(NumType::F64)),
+                0x7b => Ok(ValType::Vec(VecType::V128)),
+                0x70 => Ok(ValType::Ref(RefType::Func)),
+                0x6f => Ok(ValType::Ref(RefType::Extern)),
+                _ => Err(ParseError::new("Value is not ValType"))
+            },
+            _ => Err(ParseError::new("Should have read 1 byte"))
+        }
+    }
+}
+
 impl<T: Parseable> Parseable for Vec<T> {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Vec<T>> {
         let num = Leb128::<Size>::parse(reader)?.val;
@@ -172,5 +233,44 @@ impl Parseable for Leb128<i64> {
 impl From<Leb128<i64>> for i64 {
     fn from(value: Leb128<i64>) -> Self {
         value.val
+    }
+}
+
+pub struct FuncType {
+    rt1: ResultType,
+    rt2: ResultType
+}
+
+impl FuncType {
+    fn parse_first_byte(reader: &mut BufReader<dyn Read>) -> Result<u8> {
+        let mut buf: [u8; 1] = [0; 1];
+        let n = reader.read(&mut buf);
+        match n {
+            Ok(1) => Ok(u8::from_le_bytes(buf)),
+            _ => Err(ParseError::new("Should have read 1 byte"))
+        } 
+    }
+}
+
+impl Parseable for FuncType {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        // First byte is 0x60
+        let first_byte = Self::parse_first_byte(reader)?;
+        if first_byte != 0x60 {
+            return Err(ParseError::new("First byte of FuncType should be 0x60"));
+        }
+        
+        let rt1 = ResultType::parse(reader)?;
+        let rt2 = ResultType::parse(reader)?;
+        
+        let func = FuncType {
+            rt1: rt1,
+            rt2: rt2
+        };
+        
+        Ok(func)
     }
 }

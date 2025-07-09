@@ -1,11 +1,12 @@
 use std::io::{BufReader, Read};
 
-use crate::parseable::Result;
-use crate::types::Size;
+use crate::parseable::{Parseable, Result};
+use crate::types::{Size, FuncType};
 use crate::section::Section;
 
 pub struct TypeSection {
     size: Size,
+    funcs: Vec<FuncType>
 }
 
 impl Section for TypeSection {
@@ -19,26 +20,13 @@ impl Section for TypeSection {
 }
 
 pub fn parse(size: Size, reader: &mut BufReader<dyn Read>) -> Result<Box<dyn Section>> {
+    
+    let funcs = Vec::<FuncType>::parse(reader)?;
+
     let section = TypeSection {
-        size: size
+        size: size,
+        funcs: funcs
     };
 
-    // TODO: this is temporary code and should be replaced by
-    // actual parsing. We are just consuming bytes for the sake
-    // of testing!
-    let bytes_remaining = usize::try_from(size).unwrap();
-    let mut bytes_read = 0;
-    let mut buf: [u8; 1] = [0; 1];
-    loop {
-        let n = reader.read(&mut buf)?; 
-        if n != 1 {
-            panic!("Should have read 1 byte");
-        }
-        
-        bytes_read += n;
-        if bytes_read == bytes_remaining {
-            break;
-        } 
-    }
     Ok(Box::from(section))
 }
