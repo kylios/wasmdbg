@@ -1,4 +1,5 @@
 use std::io::{BufReader, Read};
+use std::fmt::Display;
 
 use crate::parseable::{Parseable, Result};
 use crate::types::Size;
@@ -17,6 +18,14 @@ impl Section for CustomSection {
     
     fn size(&self) -> Size {
         self.size
+    }
+}
+
+impl Display for CustomSection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Size: {}", self.size)?;
+        writeln!(f, "Name: {}", self.name)?;
+        Ok(())
     }
 }
 

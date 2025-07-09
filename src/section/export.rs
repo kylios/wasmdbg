@@ -1,4 +1,5 @@
 use std::io::{BufReader, Read};
+use std::fmt::Display;
 
 use crate::parseable::Result;
 use crate::types::Size;
@@ -15,6 +16,12 @@ impl Section for ExportSection {
     
     fn size(&self) -> Size {
         self.size
+    }
+}
+
+impl Display for ExportSection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Size: {}", self.size)
     }
 }
 

@@ -23,7 +23,7 @@ fn main() -> Result<()> {
     println!("Sections:");
     for section in module.sections {
         println!("* {}", section.section_type());
-        println!("  size: {} bytes", section.size());
+        println!("{}", section);
     }
     Ok(())
 }

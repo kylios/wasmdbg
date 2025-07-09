@@ -16,6 +16,7 @@ use crate::types::{Leb128, Size, TypeIdx};
 use crate::parseable::{Result, Parseable};
 
 use std::io::{Read, BufReader};
+use std::fmt;
 
 const CUSTOM_SECTION_ID: TypeIdx = 0;
 const TYPE_SECTION_ID: TypeIdx = 1;
@@ -31,7 +32,7 @@ const CODE_SECTION_ID: TypeIdx = 10;
 const DATA_SECTION_ID: TypeIdx = 11;
 const DATA_COUNT_SECTION_ID: TypeIdx = 12;
 
-pub trait Section {
+pub trait Section: fmt::Display {
     fn section_type(&self) -> &str;
     fn size(&self) -> Size;
 }

@@ -1,6 +1,7 @@
 use crate::parseable::{Parseable, Result, ParseError};
 
 use std::io::{BufReader, Read};
+use std::fmt::Display;
 
 pub type Size = u32;
 pub type TypeIdx = u32;
@@ -13,20 +14,6 @@ pub type DataIdx = u32;
 pub type LocalIdx = u32;
 pub type LabelIdx = u32;
 
-/* pub enum Type {
-    Val(u8)
-}
-
-const NUMTYPE_I32: Type = Type::Val(0x7f);
-const NUMTYPE_I64: Type = Type::Val(0xfe);
-const NUMTYPE_F32: Type = Type::Val(0xfd);
-const NUMTYPE_F64: Type = Type::Val(0x7c);
-
-const VECTYPE_V128: Type = Type::Val(0x7b);
-
-const REFTYPE_FUNCREF: Type = Type::Val(0x70);
-const REFTYPE_EXTERNREF: Type = Type::Val(0x6f); */
-
 pub enum NumType {
     I32,
     I64,
@@ -34,13 +21,41 @@ pub enum NumType {
     F64
 }
 
+impl Display for NumType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NumType::I32 => write!(f, "i32"),
+            NumType::I64 => write!(f, "i64"),
+            NumType::F32 => write!(f, "f32"),
+            NumType::F64 => write!(f, "F64")
+        }
+    }
+}
+
 pub enum VecType {
     V128
+}
+
+impl Display for VecType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VecType::V128 => write!(f, "v128")
+        }
+    }
 }
 
 pub enum RefType {
     Func,
     Extern
+}
+
+impl Display for RefType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RefType::Func => write!(f, "func"),
+            RefType::Extern => write!(f, "extern")
+        }
+    }
 }
 
 pub enum ValType {
@@ -50,6 +65,16 @@ pub enum ValType {
 }
 
 pub type ResultType = Vec<ValType>;
+
+impl Display for ValType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValType::Num(t) => write!(f, "numtype {}", t),
+            ValType::Vec(t) => write!(f, "vectype {}", t),
+            ValType::Ref(t) => write!(f, "reftype {}", t)
+        }
+    }
+}
 
 impl Parseable for ValType {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
@@ -249,6 +274,23 @@ impl FuncType {
             Ok(1) => Ok(u8::from_le_bytes(buf)),
             _ => Err(ParseError::new("Should have read 1 byte"))
         } 
+    }
+}
+
+impl Display for FuncType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "* rt1: ")?;
+        for rt in &self.rt1 {
+            write!(f, "{}, ", rt)?;
+        }
+        writeln!(f)?;
+        write!(f, "* rt2: ")?;
+        for rt in &self.rt2 {
+            write!(f, "{}, ", rt)?;
+        }
+        writeln!(f)?;
+
+        Ok(())
     }
 }
 
