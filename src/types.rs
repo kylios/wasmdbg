@@ -3,6 +3,8 @@ use crate::parseable::{Parseable, Result, ParseError};
 use std::io::{BufReader, Read};
 use std::fmt::Display;
 
+// TODO: split up this file into multiple
+
 pub type Size = u32;
 pub type TypeIdx = u32;
 pub type FuncIdx = u32;
@@ -47,6 +49,24 @@ impl Display for VecType {
 pub enum RefType {
     Func,
     Extern
+}
+
+impl Parseable for RefType {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        let mut buf: [u8; 1] = [0; 1];
+        let n = reader.read(&mut buf)?;
+        match n {
+            1 => match u8::from_le_bytes(buf) {
+                0x70 => Ok(RefType::Func),
+                0x6f => Ok(RefType::Extern),
+                _ => Err(ParseError::new("Value is not RefType"))
+            },
+            _ => Err(ParseError::new("Should have read 1 byte"))
+        }
+    }
 }
 
 impl Display for RefType {
@@ -314,5 +334,55 @@ impl Parseable for FuncType {
         };
         
         Ok(func)
+    }
+}
+
+pub struct Limits {
+    min: u32,
+    max: Option<u32>
+}
+
+impl Parseable for Limits {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        let flag = u8::parse(reader)?;
+        let min = Leb128::<u32>::parse(reader)?.val;
+        let mut max: Option<u32> = None;
+        if flag == 0x1 {
+            let max_val = Leb128::<u32>::parse(reader)?.val;
+            max = Some(max_val);
+        }
+        
+        Ok(Limits {
+            min,
+            max
+        })
+    }
+}
+
+pub enum Mut {
+    Val(u8)
+}
+
+pub const CONST: Mut = Mut::Val(0x0);
+pub const VAR: Mut = Mut::Val(0x1);
+
+impl Parseable for Mut {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        let mut bytes: [u8; 1] = [0; 1];
+        let n = reader.read(&mut bytes)?;
+        match n {
+            1 => match bytes[0] {
+                0x0 => Ok(CONST),
+                0x1 => Ok(VAR),
+                _ => Err(ParseError::new("Mut type must be 0x0 or 0x1"))
+            },
+            _ => Err(ParseError::new("Should have read 1 byte"))
+        }
     }
 }
