@@ -1,5 +1,5 @@
 use super::*;
-use super::types::Leb128;
+use crate::types::leb128::Leb128;
 use std::io::Cursor;
 
 #[test]    

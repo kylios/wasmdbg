@@ -12,7 +12,8 @@ mod start;
 mod table;
 mod r#type;
 
-use crate::types::{Leb128, Size, TypeIdx};
+use crate::types::leb128::Leb128;
+use crate::types::primitives::{TypeIdx, Size};
 use crate::parseable::{Result, Parseable};
 
 use std::io::{Read, BufReader};

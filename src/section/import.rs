@@ -2,7 +2,8 @@ use std::io::{BufReader, Read};
 use std::fmt::Display;
 
 use crate::parseable::{Parseable, Result};
-use crate::types::{Leb128, Limits, RefType, Size, TypeIdx, ValType, Mut};
+use crate::types::primitives::{Size, TypeIdx};
+use crate::types::enums::{Limits, RefType, ValType, Mut};
 use crate::section::Section;
 
 // TODO: move all these types into types.rs

@@ -2,7 +2,8 @@ use std::io::{BufReader, Read};
 use std::fmt::Display;
 
 use crate::parseable::{Parseable, Result};
-use crate::types::{Size, FuncType};
+use crate::types::primitives::Size;
+use crate::types::enums::FuncType;
 use crate::section::Section;
 
 pub struct TypeSection {

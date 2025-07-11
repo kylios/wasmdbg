@@ -2,7 +2,7 @@ use std::io::{BufReader, Read};
 use std::fmt::Display;
 
 use crate::parseable::Result;
-use crate::types::Size;
+use crate::types::primitives::Size;
 use crate::section::Section;
 
 pub struct MemorySection {
