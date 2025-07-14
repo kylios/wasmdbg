@@ -50,9 +50,9 @@ impl Parseable for RefType {
             1 => match u8::from_le_bytes(buf) {
                 0x70 => Ok(RefType::Func),
                 0x6f => Ok(RefType::Extern),
-                _ => Err(ParseError::new("Value is not RefType"))
+                _ => Err(ParseError::new("Value is not RefType".to_string()))
             },
-            _ => Err(ParseError::new("Should have read 1 byte"))
+            n => Err(ParseError::WrongNumBytesRead(1, n))
         }
     }
 }
@@ -100,9 +100,9 @@ impl Parseable for ValType {
                 0x7b => Ok(ValType::Vec(VecType::V128)),
                 0x70 => Ok(ValType::Ref(RefType::Func)),
                 0x6f => Ok(ValType::Ref(RefType::Extern)),
-                _ => Err(ParseError::new("Value is not ValType"))
+                _ => Err(ParseError::Other("Value is not ValType".to_string()))
             },
-            _ => Err(ParseError::new("Should have read 1 byte"))
+            n => Err(ParseError::WrongNumBytesRead(1, n))
         }
     }
 }
@@ -115,10 +115,10 @@ pub struct FuncType {
 impl FuncType {
     fn parse_first_byte(reader: &mut BufReader<dyn Read>) -> Result<u8> {
         let mut buf: [u8; 1] = [0; 1];
-        let n = reader.read(&mut buf);
+        let n = reader.read(&mut buf)?;
         match n {
-            Ok(1) => Ok(u8::from_le_bytes(buf)),
-            _ => Err(ParseError::new("Should have read 1 byte"))
+            1 => Ok(u8::from_le_bytes(buf)),
+            n => Err(ParseError::WrongNumBytesRead(1, n))
         } 
     }
 }
@@ -148,7 +148,7 @@ impl Parseable for FuncType {
         // First byte is 0x60
         let first_byte = Self::parse_first_byte(reader)?;
         if first_byte != 0x60 {
-            return Err(ParseError::new("First byte of FuncType should be 0x60"));
+            return Err(ParseError::Other("First byte of FuncType should be 0x60".to_string()));
         }
         
         let rt1 = ResultType::parse(reader)?;
@@ -206,9 +206,9 @@ impl Parseable for Mut {
             1 => match bytes[0] {
                 0x0 => Ok(CONST),
                 0x1 => Ok(VAR),
-                _ => Err(ParseError::new("Mut type must be 0x0 or 0x1"))
+                _ => Err(ParseError::Other("Mut type must be 0x0 or 0x1".to_string()))
             },
-            _ => Err(ParseError::new("Should have read 1 byte"))            
+            n => Err(ParseError::WrongNumBytesRead(1, n))
         }
     }
 }

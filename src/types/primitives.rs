@@ -42,7 +42,7 @@ impl Parseable for u8 {
         let n = reader.read(&mut buf[..]).unwrap();
         match n {
             1 => Ok(u8::from_le_bytes(buf)),
-            _ => Err(ParseError::new("Should have read 1 byte"))
+            n => Err(ParseError::WrongNumBytesRead(1, n))
         }
         
     }
@@ -54,7 +54,7 @@ impl Parseable for u32 {
         let n = reader.read(&mut buf[..]).unwrap();
         match n {
             4 => Ok(u32::from_le_bytes(buf)),
-            _ => Err(ParseError::new("Should have read 4 bytes"))
+            n => Err(ParseError::WrongNumBytesRead(4, n))
         }
     }
 }

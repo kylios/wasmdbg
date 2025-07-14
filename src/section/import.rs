@@ -2,6 +2,7 @@ use std::io::{BufReader, Read};
 use std::fmt::Display;
 
 use crate::parseable::{Parseable, Result};
+use crate::types::leb128::Leb128;
 use crate::types::primitives::{Size, TypeIdx};
 use crate::types::enums::{Limits, RefType, ValType, Mut};
 use crate::section::Section;
@@ -117,12 +118,12 @@ impl Parseable for Import {
     }
 }
 
-pub struct ImportSection {
+pub struct ImportSec {
     size: Size,
     ims: Vec<Import>
 }
 
-impl Section for ImportSection {
+impl Section for ImportSec {
     fn section_type(&self) -> &str {
         "import"
     }
@@ -132,7 +133,21 @@ impl Section for ImportSection {
     }
 }
 
-impl Display for ImportSection {
+impl Parseable for ImportSec {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+                
+        let size = Leb128::<u32>::parse(reader)?.val;
+        
+        Ok(ImportSec {
+            size: size,
+            ims: Vec::<Import>::parse(reader)?
+        })
+    }
+}
+
+impl Display for ImportSec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Size: {}", self.size)?;
         writeln!(f, "Imports:")?;
@@ -142,13 +157,4 @@ impl Display for ImportSection {
 
         Ok(())
     }
-}
-
-pub fn parse(size: Size, reader: &mut BufReader<dyn Read>) -> Result<Box<dyn Section>> {
-    let section = ImportSection {
-        size: size,
-        ims: Vec::<Import>::parse(reader)?
-    };
-
-    Ok(Box::from(section))
 }

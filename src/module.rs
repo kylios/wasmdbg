@@ -1,11 +1,37 @@
 use std::io::{BufReader, Read};
 
 use crate::parseable::{Parseable, Result, ParseError};
-use crate::section::{Section, parse};
+use crate::section::{Section, CODE_SECTION_ID, CUSTOM_SECTION_ID, DATA_COUNT_SECTION_ID, DATA_SECTION_ID, ELEMENT_SECTION_ID, EXPORT_SECTION_ID, FUNCTION_SECTION_ID, GLOBAL_SECTION_ID, IMPORT_SECTION_ID, MEMORY_SECTION_ID, START_SECTION_ID, TABLE_SECTION_ID, TYPE_SECTION_ID};
+use crate::section::code::CodeSec;
+use crate::section::data::DataSec;
+use crate::section::data_count::DataCountSec;
+use crate::section::element::ElemSec;
+use crate::section::export::ExportSec;
+use crate::section::memory::MemSec;
+use crate::section::start::StartSec;
+use crate::section::custom::CustomSec;
+use crate::section::r#type::TypeSec;
+use crate::section::function::FunctionSec;
+use crate::section::import::ImportSec;
+use crate::section::global::GlobalSec;
+use crate::section::table::TableSec;
 
+#[derive(Default)]
 pub struct Module {
     pub version: u32,
-    pub sections: Vec<Box<dyn Section>>
+    pub customsecs: Vec<CustomSec>,
+    pub typesec: Option<TypeSec>,
+    pub importsec: Option<ImportSec>,
+    pub functionsec: Option<FunctionSec>,
+    pub tablesec: Option<TableSec>,
+    pub memsec: Option<MemSec>,
+    pub globalsec: Option<GlobalSec>,
+    pub exportsec: Option<ExportSec>,
+    pub startsec: Option<StartSec>,
+    pub elemsec: Option<ElemSec>,
+    pub codesec: Option<CodeSec>,
+    pub datasec: Option<DataSec>,
+    pub datacountsec: Option<DataCountSec>
 }
 
 impl Module {
@@ -15,12 +41,12 @@ impl Module {
         if n != 4 {
             let mut owned_string = "Tried to read 4 bytes of magic number. Read ".to_owned();
             owned_string.push_str(n.to_string().as_str());
-            return Err(ParseError::new(&owned_string))
+            return Err(ParseError::Other(owned_string.to_string()));
         }
         
         // `0x00 asm` in ASCII
         if buffer != [0, 97, 115, 109] {
-            return Err(ParseError::new("Bad magic"))
+            return Err(ParseError::Other("Bad magic".to_string()));
         }
         
         Ok(())
@@ -30,6 +56,52 @@ impl Module {
         let version = u32::parse(reader)?;
         Ok(version)
     }
+    
+    pub fn sections(&self) -> Vec<&dyn Section> {
+        let mut vec = Vec::<&dyn Section>::new();
+        
+        for customsec in &self.customsecs {
+            vec.push(customsec);
+        }
+        if self.codesec.is_some() {
+            vec.push(self.codesec.as_ref().unwrap());
+        }
+        if self.datacountsec.is_some() {
+            vec.push(self.datacountsec.as_ref().unwrap());
+        }
+        if self.datasec.is_some() {
+            vec.push(self.datasec.as_ref().unwrap());
+        }
+        if self.elemsec.is_some() {
+            vec.push(self.elemsec.as_ref().unwrap());
+        }
+        if self.exportsec.is_some() {
+            vec.push(self.exportsec.as_ref().unwrap());
+        }
+        if self.functionsec.is_some() {
+            vec.push(self.functionsec.as_ref().unwrap());
+        }
+        if self.globalsec.is_some() {
+            vec.push(self.globalsec.as_ref().unwrap());
+        }
+        if self.importsec.is_some() {
+            vec.push(self.importsec.as_ref().unwrap());
+        }
+        if self.memsec.is_some() {
+            vec.push(self.memsec.as_ref().unwrap());
+        }
+        if self.startsec.is_some() {
+            vec.push(self.startsec.as_ref().unwrap());
+        }
+        if self.tablesec.is_some() {
+            vec.push(self.tablesec.as_ref().unwrap());
+        }
+        if self.typesec.is_some() {
+            vec.push(self.typesec.as_ref().unwrap());
+        }
+
+        vec
+    }
 }
 
 impl Parseable for Module {
@@ -38,20 +110,57 @@ impl Parseable for Module {
         let version = Self::parse_version(reader)?;
         
         if version != 1 {
-            return Err(ParseError::new("Wasm version should be 1"))
+            return Err(ParseError::Other("Wasm version should be 1".to_string()))
         }
         
-        let mut sections: Vec<Box<dyn Section>> = Vec::<Box<dyn Section>>::new();
+        let mut module = Module {
+            version: version,
+            ..Default::default()
+        };
+        
         loop {
-            let section = parse(reader);
-            match section {
-                Ok(section) => sections.push(section),
-                _ => break
+            let res = match u8::parse(reader) {
+                Ok(n) => n,
+                Err(ParseError::WrongNumBytesRead(asked, read)) => if read == 0 {
+                    // We are out of bytes. 
+                    break;
+                } else {
+                    return Err(ParseError::WrongNumBytesRead(asked, read));
+                },
+                Err(e) => return Err(e)
+            };
+            let section_type = u32::from(res);
+            if section_type == CODE_SECTION_ID {
+                module.codesec = Some(CodeSec::parse(reader)?);
+            } else if section_type == CUSTOM_SECTION_ID {
+                module.customsecs.push(CustomSec::parse(reader)?);
+            } else if section_type == DATA_COUNT_SECTION_ID {
+                module.datacountsec = Some(DataCountSec::parse(reader)?);
+            } else if section_type == DATA_SECTION_ID {
+                module.datasec = Some(DataSec::parse(reader)?);
+            } else if section_type == ELEMENT_SECTION_ID {
+                module.elemsec = Some(ElemSec::parse(reader)?);
+            } else if section_type == EXPORT_SECTION_ID {
+                module.exportsec = Some(ExportSec::parse(reader)?);
+            } else if section_type == FUNCTION_SECTION_ID {
+                module.functionsec = Some(FunctionSec::parse(reader)?);
+            } else if section_type == GLOBAL_SECTION_ID {
+                module.globalsec = Some(GlobalSec::parse(reader)?);
+            } else if section_type == IMPORT_SECTION_ID {
+                module.importsec = Some(ImportSec::parse(reader)?);
+            } else if section_type == MEMORY_SECTION_ID {
+                module.memsec = Some(MemSec::parse(reader)?);
+            } else if section_type == START_SECTION_ID {
+                module.startsec = Some(StartSec::parse(reader)?);
+            } else if section_type == TABLE_SECTION_ID {
+                module.tablesec = Some(TableSec::parse(reader)?);
+            } else if section_type == TYPE_SECTION_ID {
+                module.typesec = Some(TypeSec::parse(reader)?);
+            } else {
+                break;
             }
         }
-        Ok(Module {
-            version: version,
-            sections: sections
-        })
+        
+        Ok(module)
     }
 }

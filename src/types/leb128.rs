@@ -15,7 +15,7 @@ impl Parseable for Leb128<u32> {
         loop {
             let n = reader.read(&mut buf[..]).unwrap();
             if n != 1 {
-                return Err(ParseError::new("Should have read 1 byte"));
+                return Err(ParseError::WrongNumBytesRead(1, n));
             }
             val = u8::from_le_bytes(buf);
             num += u32::from(val & 127) << shift;
@@ -64,7 +64,7 @@ impl Parseable for Leb128<i32> {
         loop {
             let n = reader.read(&mut buf[..]).unwrap();
             if n != 1 {
-                return Err(ParseError::new("Should have read 1 byte"));
+                return Err(ParseError::WrongNumBytesRead(1, n));
             }
             val = u8::from_le_bytes(buf);
             num += i32::from(val & 127) << shift;

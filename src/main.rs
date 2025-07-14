@@ -21,7 +21,7 @@ fn main() -> Result<()> {
     
     println!("Version: {}", module.version);
     println!("Sections:");
-    for section in module.sections {
+    for section in module.sections() {
         println!("* {}", section.section_type());
         println!("{}", section);
     }
