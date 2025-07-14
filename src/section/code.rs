@@ -30,7 +30,7 @@ impl Parseable for CodeSec {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
         where
             Self: Sized {
-        let size = Leb128::<Size>::parse(reader)?.val;
+        let size = u32::from(Leb128::<Size>::parse(reader)?);
         
         // TODO: read the bytes
         // TODO: this is temporary code and should be replaced by

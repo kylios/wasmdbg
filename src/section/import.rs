@@ -138,7 +138,7 @@ impl Parseable for ImportSec {
         where
             Self: Sized {
                 
-        let size = Leb128::<u32>::parse(reader)?.val;
+        let size = u32::from(Leb128::<Size>::parse(reader)?);
         
         Ok(ImportSec {
             size: size,

@@ -16,7 +16,7 @@ pub type LabelIdx = u32;
 
 impl<T: Parseable> Parseable for Vec<T> {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Vec<T>> {
-        let num = Leb128::<Size>::parse(reader)?.val;
+        let num = u32::from(Leb128::<Size>::parse(reader)?);
         let mut vec: Vec<T> = Vec::new();
         for _ in 0..num {
             let elem: T = T::parse(reader)?;

@@ -2,9 +2,7 @@ use std::io::{BufReader, Read};
 
 use crate::parseable::{Parseable, Result, ParseError};
 
-pub struct Leb128<T> {
-    pub val: T
-}
+pub struct Leb128<T>(T);
 
 impl Parseable for Leb128<u32> {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<u32>> {
@@ -24,15 +22,19 @@ impl Parseable for Leb128<u32> {
             }
             shift += 7;
         }
-        Ok(Leb128 {
-            val: num
-        })
+        Ok(Leb128(num))
     }
 }
 
 impl From<Leb128<u32>> for u32  {
     fn from(value: Leb128<u32>) -> Self {
-        value.val
+        value.0
+    }
+}
+
+impl From<&Leb128<u32>> for u32 {
+    fn from(value: &Leb128<u32>) -> Self {
+        value.0
     }
 }
 
@@ -78,43 +80,54 @@ impl Parseable for Leb128<i32> {
         if shift < (i32_size * 8) && val & 0x40 != 0 {
             num |= -(1 << shift);
         }
-        Ok(Leb128 {
-            val: num
-        })
+        Ok(Leb128(num))
     }
 }
 
-
 impl From<Leb128<i32>> for i32 {
     fn from(value: Leb128<i32>) -> Self {
-        value.val
+        value.0
+    }
+}
+
+impl From<&Leb128<i32>> for i32 {
+    fn from(value: &Leb128<i32>) -> Self {
+        value.0
     }
 }
 
 impl Parseable for Leb128<u64> {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<u64>> {
-        Ok(Leb128 {
-            val: 0
-        })
+        Ok(Leb128(0))
     }
 }
 
 impl From<Leb128<u64>> for u64 {
     fn from(value: Leb128<u64>) -> Self {
-        value.val
+        value.0
+    }
+}
+
+impl From<&Leb128<u64>> for u64 {
+    fn from(value: &Leb128<u64>) -> Self {
+        value.0
     }
 }
 
 impl Parseable for Leb128<i64> {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<i64>> {
-        Ok(Leb128 {
-            val: 0
-        })
+        Ok(Leb128(0))
     }
 }
 
 impl From<Leb128<i64>> for i64 {
     fn from(value: Leb128<i64>) -> Self {
-        value.val
+        value.0
+    }
+}
+
+impl From<&Leb128<i64>> for i64 {
+    fn from(value: &Leb128<i64>) -> Self {
+        value.0
     }
 }

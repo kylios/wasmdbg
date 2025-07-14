@@ -27,7 +27,7 @@ impl Parseable for CustomSec {
         where
             Self: Sized {
         
-        let size = Leb128::<Size>::parse(reader)?.val;
+        let size = u32::from(Leb128::<Size>::parse(reader)?);
         
         let name = String::parse(reader)?;
         let size_usize = usize::try_from(size).unwrap();

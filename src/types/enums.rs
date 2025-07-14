@@ -174,10 +174,10 @@ impl Parseable for Limits {
             Self: Sized {
         
         let flag = u8::parse(reader)?;
-        let min = Leb128::<u32>::parse(reader)?.val;
+        let min = u32::from(Leb128::<u32>::parse(reader)?);
         let mut max: Option<u32> = None;
         if flag == 0x1 {
-            let max_val = Leb128::<u32>::parse(reader)?.val;
+            let max_val = u32::from(Leb128::<u32>::parse(reader)?);
             max = Some(max_val);
         }
         

@@ -8,7 +8,7 @@ fn test_u32() {
     let mut reader = BufReader::new(Cursor::new(bytes));
     let result = Leb128::<u32>::parse(&mut reader);
     assert!(result.is_ok());
-    let val = result.expect("The parsed value").val;
+    let val = u32::from(result.expect("The parsed value"));
     assert_eq!(val, 624485);
 }
 
@@ -18,7 +18,7 @@ fn test_i32() {
     let mut reader = BufReader::new(Cursor::new(bytes));
     let result = Leb128::<i32>::parse(&mut reader);
     assert!(result.is_ok());
-    let val = result.expect("The parsed value").val;
+    let val = i32::from(result.expect("The parsed value"));
     assert_eq!(val, -123456);
 }
 
@@ -29,6 +29,6 @@ fn test_vec() {
     let result: crate::parseable::Result<Vec<Leb128<u32>>> = Vec::parse(&mut reader);
     assert!(result.is_ok());
     let val = result.expect("The parsed value");
-    let nums: Vec<u32> = val.iter().map(|v| v.val).collect();
+    let nums: Vec<u32> = val.iter().map(|v| u32::from(v)).collect();
     assert_eq!(nums, vec!(1, 2, 3));
 }

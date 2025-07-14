@@ -25,7 +25,7 @@ impl Parseable for ElemSec {
         where
             Self: Sized {
         
-        let size = Leb128::<Size>::parse(reader)?.val;
+        let size = u32::from(Leb128::<Size>::parse(reader)?);
 
         // TODO: this is temporary code and should be replaced by
         // actual parsing. We are just consuming bytes for the sake
