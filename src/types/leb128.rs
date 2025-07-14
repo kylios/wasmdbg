@@ -1,6 +1,6 @@
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Parseable, Result, ParseError};
+use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
 
 pub struct Leb128<T>(T);
 
@@ -13,7 +13,7 @@ impl Parseable for Leb128<u32> {
         loop {
             let n = reader.read(&mut buf[..]).unwrap();
             if n != 1 {
-                return Err(ParseError::WrongNumBytesRead(1, n));
+                return Err(ParseError::wrong_num_bytes_read(Asked(1), Received(n)));
             }
             val = u8::from_le_bytes(buf);
             num += u32::from(val & 127) << shift;
@@ -66,7 +66,7 @@ impl Parseable for Leb128<i32> {
         loop {
             let n = reader.read(&mut buf[..]).unwrap();
             if n != 1 {
-                return Err(ParseError::WrongNumBytesRead(1, n));
+                return Err(ParseError::wrong_num_bytes_read(Asked(1), Received(n)));
             }
             val = u8::from_le_bytes(buf);
             num += i32::from(val & 127) << shift;

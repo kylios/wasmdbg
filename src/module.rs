@@ -121,7 +121,7 @@ impl Parseable for Module {
         loop {
             let res = match u8::parse(reader) {
                 Ok(n) => n,
-                Err(ParseError::WrongNumBytesRead(asked, read)) => if read == 0 {
+                Err(ParseError::WrongNumBytesRead(asked, read)) => if usize::from(read) == 0 {
                     // We are out of bytes. 
                     break;
                 } else {

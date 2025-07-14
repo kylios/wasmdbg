@@ -1,7 +1,7 @@
 use std::io::{BufReader, Read};
 use std::fmt::Display;
 
-use crate::parseable::{Parseable, Result, ParseError};
+use crate::parseable::{Parseable, Result, ParseError, Asked, Received};
 use crate::types::leb128::Leb128;
 
 pub enum NumType {
@@ -52,7 +52,7 @@ impl Parseable for RefType {
                 0x6f => Ok(RefType::Extern),
                 _ => Err(ParseError::new("Value is not RefType".to_string()))
             },
-            n => Err(ParseError::WrongNumBytesRead(1, n))
+            n => Err(ParseError::wrong_num_bytes_read(Asked(1), Received(n)))
         }
     }
 }
@@ -102,7 +102,7 @@ impl Parseable for ValType {
                 0x6f => Ok(ValType::Ref(RefType::Extern)),
                 _ => Err(ParseError::Other("Value is not ValType".to_string()))
             },
-            n => Err(ParseError::WrongNumBytesRead(1, n))
+            n => Err(ParseError::wrong_num_bytes_read(Asked(1), Received(n)))
         }
     }
 }
@@ -118,7 +118,7 @@ impl FuncType {
         let n = reader.read(&mut buf)?;
         match n {
             1 => Ok(u8::from_le_bytes(buf)),
-            n => Err(ParseError::WrongNumBytesRead(1, n))
+            n => Err(ParseError::wrong_num_bytes_read(Asked(1), Received(n)))
         } 
     }
 }
@@ -208,7 +208,7 @@ impl Parseable for Mut {
                 0x1 => Ok(VAR),
                 _ => Err(ParseError::Other("Mut type must be 0x0 or 0x1".to_string()))
             },
-            n => Err(ParseError::WrongNumBytesRead(1, n))
+            n => Err(ParseError::wrong_num_bytes_read(Asked(1), Received(n)))
         }
     }
 }

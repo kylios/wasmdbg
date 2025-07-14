@@ -1,6 +1,6 @@
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Parseable, Result, ParseError};
+use crate::parseable::{Asked, Received, ParseError, Parseable, Result};
 use crate::types::leb128::{Leb128};
 
 pub type Size = u32;
@@ -42,7 +42,7 @@ impl Parseable for u8 {
         let n = reader.read(&mut buf[..]).unwrap();
         match n {
             1 => Ok(u8::from_le_bytes(buf)),
-            n => Err(ParseError::WrongNumBytesRead(1, n))
+            n => Err(ParseError::wrong_num_bytes_read(Asked(1), Received(n)))
         }
         
     }
@@ -54,7 +54,7 @@ impl Parseable for u32 {
         let n = reader.read(&mut buf[..]).unwrap();
         match n {
             4 => Ok(u32::from_le_bytes(buf)),
-            n => Err(ParseError::WrongNumBytesRead(4, n))
+            n => Err(ParseError::wrong_num_bytes_read(Asked(4), Received(n)))
         }
     }
 }

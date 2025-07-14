@@ -3,9 +3,26 @@ use std::fmt::Debug;
 use std::string::FromUtf8Error;
 
 #[derive(Debug)]
+pub struct Asked(pub usize);
+#[derive(Debug, Clone, Copy)]
+pub struct Received(pub usize);
+
+impl From<Received> for usize {
+    fn from(value: Received) -> Self {
+        value.0
+    }
+}
+
+#[derive(Debug)]
 pub enum ParseError {
-    WrongNumBytesRead(usize, usize),
+    WrongNumBytesRead(Asked, Received),
     Other(String)    
+}
+
+impl ParseError {
+    pub fn wrong_num_bytes_read(asked: Asked, received: Received) -> ParseError {
+        ParseError::WrongNumBytesRead(asked, received)
+    }
 }
 
 impl ParseError {
