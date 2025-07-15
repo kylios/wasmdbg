@@ -1,7 +1,7 @@
 use std::io::{BufReader, Read};
 use std::fmt::Display;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, ParseError, Asked, Received};
 use crate::types::primitives::Size;
 use crate::types::leb128::Leb128;
 use crate::section::Section;
@@ -26,13 +26,12 @@ impl Display for CodeSec {
     }
 }
 
-impl Parseable for CodeSec {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+impl CodeSec {
+    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
         where
             Self: Sized {
         let size = u32::from(Leb128::<Size>::parse(reader)?);
         
-        // TODO: read the bytes
         // TODO: this is temporary code and should be replaced by
         // actual parsing. We are just consuming bytes for the sake
         // of testing!
@@ -42,7 +41,7 @@ impl Parseable for CodeSec {
         loop {
             let n = reader.read(&mut buf)?; 
             if n != 1 {
-                panic!("Should have read 1 byte");
+                return Err(ParseError::WrongNumBytesRead(Asked(1), Received(n)));
             }
             
             bytes_read += n;

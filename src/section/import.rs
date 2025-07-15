@@ -1,97 +1,12 @@
 use std::io::{BufReader, Read};
 use std::fmt::Display;
+use std::result::Result;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, ParseError};
 use crate::types::leb128::Leb128;
-use crate::types::primitives::{Size, TypeIdx};
-use crate::types::enums::{Limits, RefType, ValType, Mut};
+use crate::types::primitives::{Size};
+use crate::types::enums::{ImportDesc};
 use crate::section::Section;
-
-// TODO: move all these types into types.rs
-// TODO: implement Display trait for these types
-
-struct GlobalType {
-    t: ValType,
-    r#mut: Mut
-}
-
-impl Parseable for GlobalType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
-        where
-            Self: Sized {
-        
-        let t = ValType::parse(reader)?;
-        let r#mut = Mut::parse(reader)?;
-
-        Ok(GlobalType { 
-            t,
-            r#mut
-        })
-    }
-}
-
-struct MemType {
-    lim: Limits
-}
-
-impl Parseable for MemType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
-        where
-            Self: Sized {
-        
-        let lim = Limits::parse(reader)?;
-
-        Ok(MemType {
-            lim
-        })
-    }
-}
-
-struct TableType {
-    et: RefType,
-    lim: Limits 
-}
-
-impl Parseable for TableType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
-        where
-            Self: Sized {
-        
-        let et = RefType::parse(reader)?;
-        let lim = Limits::parse(reader)?;
-
-        Ok(TableType {
-            et,
-            lim
-        })
-    }
-}
-
-pub struct ImportDesc {
-    func: TypeIdx,
-    table: TableType,
-    mem: MemType,
-    global: GlobalType
-}
-
-impl Parseable for ImportDesc {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
-        where
-            Self: Sized {
-                
-        let func = TypeIdx::parse(reader)?;
-        let table = TableType::parse(reader)?;
-        let mem = MemType::parse(reader)?;
-        let global = GlobalType::parse(reader)?;
-        
-        Ok(ImportDesc {
-            func,
-            table,
-            mem,
-            global
-        })
-    }
-}
 
 pub struct Import {
     // module name
@@ -102,7 +17,7 @@ pub struct Import {
 }
 
 impl Parseable for Import {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
         where
             Self: Sized {
         
@@ -133,8 +48,8 @@ impl Section for ImportSec {
     }
 }
 
-impl Parseable for ImportSec {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+impl ImportSec {
+    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
         where
             Self: Sized {
                 

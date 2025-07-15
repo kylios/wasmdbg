@@ -3,6 +3,7 @@ use std::fmt::Display;
 
 use crate::parseable::{Parseable, Result, ParseError, Asked, Received};
 use crate::types::leb128::Leb128;
+use crate::types::primitives::TypeIdx;
 
 pub enum NumType {
     I32,
@@ -212,3 +213,88 @@ impl Parseable for Mut {
         }
     }
 }
+
+
+pub struct GlobalType {
+    t: ValType,
+    r#mut: Mut
+}
+
+impl Parseable for GlobalType {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        let t = ValType::parse(reader)?;
+        let r#mut = Mut::parse(reader)?;
+
+        Ok(GlobalType { 
+            t,
+            r#mut
+        })
+    }
+}
+
+pub struct MemType {
+    lim: Limits
+}
+
+impl Parseable for MemType {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        let lim = Limits::parse(reader)?;
+
+        Ok(MemType {
+            lim
+        })
+    }
+}
+
+pub struct TableType {
+    et: RefType,
+    lim: Limits 
+}
+
+impl Parseable for TableType {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+        
+        let et = RefType::parse(reader)?;
+        let lim = Limits::parse(reader)?;
+
+        Ok(TableType {
+            et,
+            lim
+        })
+    }
+}
+
+pub struct ImportDesc {
+    func: TypeIdx,
+    table: TableType,
+    mem: MemType,
+    global: GlobalType
+}
+
+impl Parseable for ImportDesc {
+    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+        where
+            Self: Sized {
+                
+        let func = TypeIdx::parse(reader)?;
+        let table = TableType::parse(reader)?;
+        let mem = MemType::parse(reader)?;
+        let global = GlobalType::parse(reader)?;
+        
+        Ok(ImportDesc {
+            func,
+            table,
+            mem,
+            global
+        })
+    }
+}
+

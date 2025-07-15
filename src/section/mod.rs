@@ -13,7 +13,6 @@ pub mod table;
 pub mod r#type;
 
 use crate::types::primitives::{TypeIdx, Size};
-use crate::parseable::Parseable;
 
 use std::fmt;
 
@@ -31,7 +30,9 @@ pub const CODE_SECTION_ID: TypeIdx = 10;
 pub const DATA_SECTION_ID: TypeIdx = 11;
 pub const DATA_COUNT_SECTION_ID: TypeIdx = 12;
 
-pub trait Section: fmt::Display + Parseable {
+pub trait Section: fmt::Display {
     fn section_type(&self) -> &str;
     fn size(&self) -> Size;
 }
+
+pub struct SectionParseError(String);

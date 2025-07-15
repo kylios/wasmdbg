@@ -1,5 +1,6 @@
 use super::*;
 use crate::types::leb128::Leb128;
+use crate::parseable::Parseable;
 use std::io::Cursor;
 
 #[test]    

@@ -1,6 +1,6 @@
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, Received, ParseError, Parseable, Result};
+use crate::parseable::{Asked, Received, Parseable, Result, ParseError};
 use crate::types::leb128::{Leb128};
 
 pub type Size = u32;

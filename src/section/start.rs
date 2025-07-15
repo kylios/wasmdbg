@@ -1,7 +1,7 @@
 use std::io::{BufReader, Read};
 use std::fmt::Display;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Asked, Parseable, Received, Result};
 use crate::types::leb128::Leb128;
 use crate::types::primitives::Size;
 use crate::section::Section;
@@ -26,8 +26,8 @@ impl Display for StartSec {
     }
 }
 
-impl Parseable for StartSec {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+impl StartSec {
+    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
         where
             Self: Sized {
         
@@ -42,7 +42,7 @@ impl Parseable for StartSec {
         loop {
             let n = reader.read(&mut buf)?; 
             if n != 1 {
-                panic!("Should have read 1 byte");
+                return Err(crate::parseable::ParseError::WrongNumBytesRead(Asked(1), Received(n)))
             }
             
             bytes_read += n;

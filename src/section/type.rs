@@ -34,8 +34,8 @@ impl Section for TypeSec {
     }
 }
 
-impl Parseable for TypeSec {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+impl TypeSec {
+    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
         where
             Self: Sized {
         

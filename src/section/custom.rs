@@ -1,10 +1,11 @@
-use std::io::{BufReader, Read};
+use std::io::{BufReader, Read as IoRead};
 use std::fmt::Display;
+use std::result::Result;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Asked, ParseError, Parseable, Received};
 use crate::types::primitives::Size;
 use crate::types::leb128::Leb128;
-use crate::section::Section;
+use crate::section::{Section, SectionParseError};
 
 pub struct CustomSec {
     size: Size,
@@ -22,8 +23,41 @@ impl Section for CustomSec {
     }
 }
 
-impl Parseable for CustomSec {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+pub struct Read(usize);
+pub struct Remaining(usize);
+
+pub enum CustomSecParseError {
+    Parse(ParseError),
+    IoError(std::io::Error),
+    ByteCount(Read, Remaining)
+}
+
+impl From<ParseError> for CustomSecParseError {
+    fn from(value: ParseError) -> Self {
+        CustomSecParseError::Parse(value)
+    }
+}
+
+impl From<std::io::Error> for CustomSecParseError {
+    fn from(value: std::io::Error) -> Self {
+        CustomSecParseError::IoError(value)
+    }
+}
+
+impl Into<SectionParseError> for CustomSecParseError {
+    fn into(self) -> SectionParseError {
+        let s: String = match self {
+            CustomSecParseError::Parse(e) => e.to_string(),
+            CustomSecParseError::IoError(e) => e.to_string(),
+            CustomSecParseError::ByteCount(read, remaining) => {
+                format!("Should have read {}, but read {}", read.0, remaining.0)
+            }
+        };
+        SectionParseError(s)
+    }
+}
+impl CustomSec {
+    pub fn parse(reader: &mut BufReader<dyn IoRead>) -> Result<Self, CustomSecParseError>
         where
             Self: Sized {
         
@@ -40,7 +74,7 @@ impl Parseable for CustomSec {
         loop {
             let n = reader.read(&mut buf)?; 
             if n != 1 {
-                panic!("Should have read 1 byte");
+                return Err(CustomSecParseError::Parse(ParseError::WrongNumBytesRead(Asked(1), Received(n))));
             }
             data.extend_from_slice(&buf);
             
@@ -50,7 +84,9 @@ impl Parseable for CustomSec {
             } 
         }
 
-        assert_eq!(bytes_read, bytes_remaining);
+        if bytes_read != bytes_remaining {
+            return Err(CustomSecParseError::ByteCount(Read(bytes_read), Remaining(bytes_remaining)))
+        }
 
         Ok(CustomSec {
             size: size,

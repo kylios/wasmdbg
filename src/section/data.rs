@@ -1,7 +1,8 @@
 use std::io::{BufReader, Read};
 use std::fmt::Display;
+use std::result::Result;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, ParseError, Asked, Received};
 use crate::types::primitives::Size;
 use crate::types::leb128::Leb128;
 use crate::section::Section;
@@ -20,8 +21,8 @@ impl Section for DataSec {
     }
 }
 
-impl Parseable for DataSec {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+impl DataSec {
+    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
         where
             Self: Sized {
         
@@ -36,7 +37,7 @@ impl Parseable for DataSec {
         loop {
             let n = reader.read(&mut buf)?; 
             if n != 1 {
-                panic!("Should have read 1 byte");
+                return Err(ParseError::WrongNumBytesRead(Asked(1), Received(n)));
             }
             
             bytes_read += n;

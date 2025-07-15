@@ -1,7 +1,9 @@
+use std::collections::btree_map::Values;
 use std::io::{BufReader, Read};
+use std::result::Result;
 
-use crate::parseable::{Parseable, Result, ParseError};
-use crate::section::{Section, CODE_SECTION_ID, CUSTOM_SECTION_ID, DATA_COUNT_SECTION_ID, DATA_SECTION_ID, ELEMENT_SECTION_ID, EXPORT_SECTION_ID, FUNCTION_SECTION_ID, GLOBAL_SECTION_ID, IMPORT_SECTION_ID, MEMORY_SECTION_ID, START_SECTION_ID, TABLE_SECTION_ID, TYPE_SECTION_ID};
+use crate::parseable::{ParseError, Received, Parseable};
+use crate::section::{Section, SectionParseError, CODE_SECTION_ID, CUSTOM_SECTION_ID, DATA_COUNT_SECTION_ID, DATA_SECTION_ID, ELEMENT_SECTION_ID, EXPORT_SECTION_ID, FUNCTION_SECTION_ID, GLOBAL_SECTION_ID, IMPORT_SECTION_ID, MEMORY_SECTION_ID, START_SECTION_ID, TABLE_SECTION_ID, TYPE_SECTION_ID};
 use crate::section::code::CodeSec;
 use crate::section::data::DataSec;
 use crate::section::data_count::DataCountSec;
@@ -9,10 +11,10 @@ use crate::section::element::ElemSec;
 use crate::section::export::ExportSec;
 use crate::section::memory::MemSec;
 use crate::section::start::StartSec;
-use crate::section::custom::CustomSec;
+use crate::section::custom::{CustomSec, CustomSecParseError};
 use crate::section::r#type::TypeSec;
 use crate::section::function::FunctionSec;
-use crate::section::import::ImportSec;
+use crate::section::import::{ImportSec};
 use crate::section::global::GlobalSec;
 use crate::section::table::TableSec;
 
@@ -34,27 +36,59 @@ pub struct Module {
     pub datacountsec: Option<DataCountSec>
 }
 
-impl Module {
-    fn parse_magic(reader: &mut BufReader<dyn Read>) -> Result<()> {
-        let mut buffer = [0; 4];
-        let n = reader.read(&mut buffer[..])?;
-        if n != 4 {
-            let mut owned_string = "Tried to read 4 bytes of magic number. Read ".to_owned();
-            owned_string.push_str(n.to_string().as_str());
-            return Err(ParseError::Other(owned_string.to_string()));
+pub enum ModuleParseError {
+    Parse(ParseError),
+    BadMagic([u8; 4]),
+    InvalidVersion(u32),
+    SectionParseError(SectionParseError)
+}
+
+impl From<ParseError> for ModuleParseError {
+    fn from(value: ParseError) -> Self {
+        ModuleParseError::Parse(value)
+    }
+}
+
+impl From<SectionParseError> for ModuleParseError {
+    fn from(value: SectionParseError) -> Self {
+        ModuleParseError::SectionParseError(value)
+    }
+}
+
+impl From<CustomSecParseError> for ModuleParseError {
+    fn from(value: CustomSecParseError) -> Self {
+        ModuleParseError::SectionParseError(value.into())
+    }
+}
+
+impl Into<ParseError> for ModuleParseError {
+    fn into(self) -> ParseError {
+        match self {
+            ModuleParseError::BadMagic(magic) => ParseError::Other(format!("bad magic: {:#?}", magic)),
+            ModuleParseError::InvalidVersion(version) => ParseError::Other(format!("bad version: {}", version)),
+            err => err.into()
         }
-        
+    }
+}
+
+impl Module {
+    fn parse_magic(reader: &mut BufReader<dyn Read>) -> Result<(), ModuleParseError> {
+        let magic = u32::parse(reader)?;
+        let bytes = magic.to_le_bytes();
+
         // `0x00 asm` in ASCII
-        if buffer != [0, 97, 115, 109] {
-            return Err(ParseError::Other("Bad magic".to_string()));
+        if bytes != [0, 97, 115, 109] {
+            return Err(ModuleParseError::BadMagic(bytes));
         }
         
         Ok(())
     }
     
-    fn parse_version(reader: &mut BufReader<dyn Read>) -> Result<u32> {
-        let version = u32::parse(reader)?;
-        Ok(version)
+    fn parse_version(reader: &mut BufReader<dyn Read>) -> Result<u32, ModuleParseError> {
+        match u32::parse(reader) {
+            Err(e) => Err(ModuleParseError::Parse(e)),
+            Ok(version) => Ok(version)
+        }
     }
     
     pub fn sections(&self) -> Vec<&dyn Section> {
@@ -102,15 +136,13 @@ impl Module {
 
         vec
     }
-}
 
-impl Parseable for Module {
-    fn parse(reader: &mut std::io::BufReader<dyn std::io::Read>) -> Result<Module> {
+    pub fn parse(reader: &mut std::io::BufReader<dyn std::io::Read>) -> Result<Module, ModuleParseError> {
         Self::parse_magic(reader)?;
         let version = Self::parse_version(reader)?;
         
         if version != 1 {
-            return Err(ParseError::Other("Wasm version should be 1".to_string()))
+            return Err(ModuleParseError::InvalidVersion(version));
         }
         
         let mut module = Module {
@@ -121,13 +153,11 @@ impl Parseable for Module {
         loop {
             let res = match u8::parse(reader) {
                 Ok(n) => n,
-                Err(ParseError::WrongNumBytesRead(asked, read)) => if usize::from(read) == 0 {
+                Err(ParseError::WrongNumBytesRead(_, Received(0))) => {
                     // We are out of bytes. 
                     break;
-                } else {
-                    return Err(ParseError::WrongNumBytesRead(asked, read));
                 },
-                Err(e) => return Err(e)
+                Err(e) => return Err(ModuleParseError::Parse(e))
             };
             let section_type = u32::from(res);
             if section_type == CODE_SECTION_ID {
