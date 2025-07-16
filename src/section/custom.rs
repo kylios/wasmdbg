@@ -1,23 +1,23 @@
-use std::io::{BufReader, Read as IoRead};
 use std::fmt::Display;
+use std::io::{BufReader, Read as IoRead};
 use std::result::Result;
 
 use crate::parseable::{Asked, ParseError, Parseable, Received};
-use crate::types::primitives::Size;
-use crate::types::leb128::Leb128;
 use crate::section::{Section, SectionParseError};
+use crate::types::leb128::Leb128;
+use crate::types::primitives::Size;
 
 pub struct CustomSec {
     size: Size,
     name: String,
-    data: Vec<u8>    
+    data: Vec<u8>,
 }
 
 impl Section for CustomSec {
     fn section_type(&self) -> &str {
         "custom"
     }
-    
+
     fn size(&self) -> Size {
         self.size
     }
@@ -29,7 +29,7 @@ pub struct Remaining(usize);
 pub enum CustomSecParseError {
     Parse(ParseError),
     IoError(std::io::Error),
-    ByteCount(Read, Remaining)
+    ByteCount(Read, Remaining),
 }
 
 impl From<ParseError> for CustomSecParseError {
@@ -58,41 +58,47 @@ impl Into<SectionParseError> for CustomSecParseError {
 }
 impl CustomSec {
     pub fn parse(reader: &mut BufReader<dyn IoRead>) -> Result<Self, CustomSecParseError>
-        where
-            Self: Sized {
-        
-        let size = u32::from(Leb128::<Size>::parse(reader)?);
-        
+    where
+        Self: Sized,
+    {
+        let size = u32::from(Leb128::<u32>::parse(reader)?);
+
         let name = String::parse(reader)?;
         let size_usize = usize::try_from(size).unwrap();
         let bytes_remaining = size_usize - name.len();
 
         let mut data = Vec::<u8>::with_capacity(bytes_remaining);
-        
+
         let mut bytes_read = 0;
         let mut buf: [u8; 1] = [0; 1];
         loop {
-            let n = reader.read(&mut buf)?; 
+            let n = reader.read(&mut buf)?;
             if n != 1 {
-                return Err(CustomSecParseError::Parse(ParseError::WrongNumBytesRead(Asked(1), Received(n))));
+                return Err(CustomSecParseError::Parse(ParseError::WrongNumBytesRead(
+                    Asked(1),
+                    Received(n),
+                )));
             }
             data.extend_from_slice(&buf);
-            
+
             bytes_read += n;
             if bytes_read == bytes_remaining {
                 break;
-            } 
+            }
         }
 
         if bytes_read != bytes_remaining {
-            return Err(CustomSecParseError::ByteCount(Read(bytes_read), Remaining(bytes_remaining)))
+            return Err(CustomSecParseError::ByteCount(
+                Read(bytes_read),
+                Remaining(bytes_remaining),
+            ));
         }
 
         Ok(CustomSec {
-            size: size,
+            size: Size(size),
             name: name,
-            data: data
-        })     
+            data: data,
+        })
     }
 }
 

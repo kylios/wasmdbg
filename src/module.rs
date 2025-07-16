@@ -1,22 +1,27 @@
-use std::collections::btree_map::Values;
 use std::io::{BufReader, Read};
 use std::result::Result;
 
-use crate::parseable::{ParseError, Received, Parseable};
-use crate::section::{Section, SectionParseError, CODE_SECTION_ID, CUSTOM_SECTION_ID, DATA_COUNT_SECTION_ID, DATA_SECTION_ID, ELEMENT_SECTION_ID, EXPORT_SECTION_ID, FUNCTION_SECTION_ID, GLOBAL_SECTION_ID, IMPORT_SECTION_ID, MEMORY_SECTION_ID, START_SECTION_ID, TABLE_SECTION_ID, TYPE_SECTION_ID};
+use crate::parseable::{ParseError, Parseable, Received};
 use crate::section::code::CodeSec;
+use crate::section::custom::{CustomSec, CustomSecParseError};
 use crate::section::data::DataSec;
 use crate::section::data_count::DataCountSec;
 use crate::section::element::ElemSec;
 use crate::section::export::ExportSec;
+use crate::section::function::FunctionSec;
+use crate::section::global::GlobalSec;
+use crate::section::import::ImportSec;
 use crate::section::memory::MemSec;
 use crate::section::start::StartSec;
-use crate::section::custom::{CustomSec, CustomSecParseError};
-use crate::section::r#type::TypeSec;
-use crate::section::function::FunctionSec;
-use crate::section::import::{ImportSec};
-use crate::section::global::GlobalSec;
 use crate::section::table::TableSec;
+use crate::section::r#type::TypeSec;
+use crate::section::{
+    CODE_SECTION_ID, CUSTOM_SECTION_ID, DATA_COUNT_SECTION_ID, DATA_SECTION_ID, ELEMENT_SECTION_ID,
+    EXPORT_SECTION_ID, FUNCTION_SECTION_ID, GLOBAL_SECTION_ID, IMPORT_SECTION_ID,
+    MEMORY_SECTION_ID, START_SECTION_ID, Section, SectionParseError, TABLE_SECTION_ID,
+    TYPE_SECTION_ID,
+};
+use crate::types::primitives::TypeIdx;
 
 #[derive(Default)]
 pub struct Module {
@@ -33,14 +38,14 @@ pub struct Module {
     pub elemsec: Option<ElemSec>,
     pub codesec: Option<CodeSec>,
     pub datasec: Option<DataSec>,
-    pub datacountsec: Option<DataCountSec>
+    pub datacountsec: Option<DataCountSec>,
 }
 
 pub enum ModuleParseError {
     Parse(ParseError),
     BadMagic([u8; 4]),
     InvalidVersion(u32),
-    SectionParseError(SectionParseError)
+    SectionParseError(SectionParseError),
 }
 
 impl From<ParseError> for ModuleParseError {
@@ -64,9 +69,13 @@ impl From<CustomSecParseError> for ModuleParseError {
 impl Into<ParseError> for ModuleParseError {
     fn into(self) -> ParseError {
         match self {
-            ModuleParseError::BadMagic(magic) => ParseError::Other(format!("bad magic: {:#?}", magic)),
-            ModuleParseError::InvalidVersion(version) => ParseError::Other(format!("bad version: {}", version)),
-            err => err.into()
+            ModuleParseError::BadMagic(magic) => {
+                ParseError::Other(format!("bad magic: {:#?}", magic))
+            }
+            ModuleParseError::InvalidVersion(version) => {
+                ParseError::Other(format!("bad version: {}", version))
+            }
+            err => err.into(),
         }
     }
 }
@@ -80,20 +89,20 @@ impl Module {
         if bytes != [0, 97, 115, 109] {
             return Err(ModuleParseError::BadMagic(bytes));
         }
-        
+
         Ok(())
     }
-    
+
     fn parse_version(reader: &mut BufReader<dyn Read>) -> Result<u32, ModuleParseError> {
         match u32::parse(reader) {
             Err(e) => Err(ModuleParseError::Parse(e)),
-            Ok(version) => Ok(version)
+            Ok(version) => Ok(version),
         }
     }
-    
+
     pub fn sections(&self) -> Vec<&dyn Section> {
         let mut vec = Vec::<&dyn Section>::new();
-        
+
         for customsec in &self.customsecs {
             vec.push(customsec);
         }
@@ -137,29 +146,31 @@ impl Module {
         vec
     }
 
-    pub fn parse(reader: &mut std::io::BufReader<dyn std::io::Read>) -> Result<Module, ModuleParseError> {
+    pub fn parse(
+        reader: &mut std::io::BufReader<dyn std::io::Read>,
+    ) -> Result<Module, ModuleParseError> {
         Self::parse_magic(reader)?;
         let version = Self::parse_version(reader)?;
-        
+
         if version != 1 {
             return Err(ModuleParseError::InvalidVersion(version));
         }
-        
+
         let mut module = Module {
             version: version,
             ..Default::default()
         };
-        
+
         loop {
             let res = match u8::parse(reader) {
                 Ok(n) => n,
                 Err(ParseError::WrongNumBytesRead(_, Received(0))) => {
-                    // We are out of bytes. 
+                    // We are out of bytes.
                     break;
-                },
-                Err(e) => return Err(ModuleParseError::Parse(e))
+                }
+                Err(e) => return Err(ModuleParseError::Parse(e)),
             };
-            let section_type = u32::from(res);
+            let section_type = TypeIdx(u32::from(res));
             if section_type == CODE_SECTION_ID {
                 module.codesec = Some(CodeSec::parse(reader)?);
             } else if section_type == CUSTOM_SECTION_ID {
@@ -190,7 +201,7 @@ impl Module {
                 break;
             }
         }
-        
+
         Ok(module)
     }
 }

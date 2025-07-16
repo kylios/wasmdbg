@@ -1,48 +1,48 @@
-use std::io::{BufReader, Read};
 use std::fmt::Display;
+use std::io::{BufReader, Read};
 use std::result::Result;
 
-use crate::parseable::{Parseable, ParseError};
-use crate::types::leb128::Leb128;
-use crate::types::primitives::{Size};
-use crate::types::enums::{ImportDesc};
+use crate::parseable::{ParseError, Parseable};
 use crate::section::Section;
+use crate::types::enums::ImportDesc;
+use crate::types::leb128::Leb128;
+use crate::types::primitives::Size;
 
 pub struct Import {
     // module name
     name: String,
     // name
     nm: String,
-    d: ImportDesc
+    d: ImportDesc,
 }
 
 impl Parseable for Import {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
-        where
-            Self: Sized {
-        
+    where
+        Self: Sized,
+    {
         let name = String::parse(reader)?;
         let nm = String::parse(reader)?;
         let d = ImportDesc::parse(reader)?;
-        
+
         Ok(Import {
             name: name,
             nm: nm,
-            d: d
+            d: d,
         })
     }
 }
 
 pub struct ImportSec {
     size: Size,
-    ims: Vec<Import>
+    ims: Vec<Import>,
 }
 
 impl Section for ImportSec {
     fn section_type(&self) -> &str {
         "import"
     }
-    
+
     fn size(&self) -> Size {
         self.size
     }
@@ -50,14 +50,14 @@ impl Section for ImportSec {
 
 impl ImportSec {
     pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
-        where
-            Self: Sized {
-                
-        let size = u32::from(Leb128::<Size>::parse(reader)?);
-        
+    where
+        Self: Sized,
+    {
+        let size = u32::from(Leb128::<u32>::parse(reader)?);
+
         Ok(ImportSec {
-            size: size,
-            ims: Vec::<Import>::parse(reader)?
+            size: Size(size),
+            ims: Vec::<Import>::parse(reader)?,
         })
     }
 }

@@ -1,15 +1,15 @@
-use std::io::{BufReader, Read};
 use std::fmt::Display;
+use std::io::{BufReader, Read};
 
 use crate::parseable::{Parseable, Result};
+use crate::section::Section;
+use crate::types::enums::FuncType;
 use crate::types::leb128::Leb128;
 use crate::types::primitives::Size;
-use crate::types::enums::FuncType;
-use crate::section::Section;
 
 pub struct TypeSec {
     size: Size,
-    funcs: Vec<FuncType>
+    funcs: Vec<FuncType>,
 }
 
 impl Display for TypeSec {
@@ -28,7 +28,7 @@ impl Section for TypeSec {
     fn section_type(&self) -> &str {
         "type"
     }
-    
+
     fn size(&self) -> Size {
         self.size
     }
@@ -36,14 +36,14 @@ impl Section for TypeSec {
 
 impl TypeSec {
     pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
-        where
-            Self: Sized {
-        
-        let size = u32::from(Leb128::<Size>::parse(reader)?);
+    where
+        Self: Sized,
+    {
+        let size = u32::from(Leb128::<u32>::parse(reader)?);
 
         Ok(TypeSec {
-            size: size,
-            funcs: Vec::<FuncType>::parse(reader)?
+            size: Size(size),
+            funcs: Vec::<FuncType>::parse(reader)?,
         })
     }
 }
