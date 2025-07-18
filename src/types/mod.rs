@@ -1,3 +1,14 @@
-pub mod primitives;
+pub mod func_type;
+pub mod global_type;
+pub mod import_desc;
 pub mod leb128;
-pub mod enums;
+pub mod limits;
+pub mod mem_type;
+pub mod r#mut;
+pub mod num_type;
+pub mod primitives;
+pub mod ref_type;
+pub mod result_type;
+pub mod table_type;
+pub mod val_type;
+pub mod vec_type;

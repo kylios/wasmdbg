@@ -4,7 +4,7 @@ use std::result::Result;
 
 use crate::parseable::{ParseError, Parseable};
 use crate::section::Section;
-use crate::types::enums::ImportDesc;
+use crate::types::import_desc::ImportDesc;
 use crate::types::leb128::Leb128;
 use crate::types::primitives::Size;
 

@@ -3,7 +3,7 @@ use std::io::{BufReader, Read};
 
 use crate::parseable::{Parseable, Result};
 use crate::section::Section;
-use crate::types::enums::FuncType;
+use crate::types::func_type::FuncType;
 use crate::types::leb128::Leb128;
 use crate::types::primitives::Size;
 
