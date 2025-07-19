@@ -3,6 +3,7 @@ use std::io::{BufReader, Read};
 
 use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
 
+#[derive(Debug, Copy, Clone)]
 pub enum RefType {
     Func,
     Extern,

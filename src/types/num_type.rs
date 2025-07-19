@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[derive(Debug, Copy, Clone)]
 pub enum NumType {
     I32,
     I64,

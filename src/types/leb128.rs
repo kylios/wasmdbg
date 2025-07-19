@@ -18,7 +18,7 @@ impl Parseable for Leb128<u32> {
             val = u8::from_le_bytes(buf);
             num += u32::from(val & 127) << shift;
             if val & 128 == 0 {
-                break ()
+                break ();
             }
             shift += 7;
         }
@@ -26,7 +26,7 @@ impl Parseable for Leb128<u32> {
     }
 }
 
-impl From<Leb128<u32>> for u32  {
+impl From<Leb128<u32>> for u32 {
     fn from(value: Leb128<u32>) -> Self {
         value.0
     }
@@ -38,7 +38,7 @@ impl From<&Leb128<u32>> for u32 {
     }
 }
 
-// TODO: can we more elegantly convert a 
+// TODO: can we more elegantly convert a
 // vector of LEB types to their natural types?
 /* impl<T> From<Vec<Leb128<T>>> for Vec<T> {
     fn from(value: Vec<Leb128<T>>) -> Self {
@@ -72,10 +72,10 @@ impl Parseable for Leb128<i32> {
             num += i32::from(val & 127) << shift;
             shift += 7;
             if val & 128 == 0 {
-                break ()
+                break ();
             }
         }
-        
+
         let i32_size: u32 = size_of::<i32>().try_into().unwrap();
         if shift < (i32_size * 8) && val & 0x40 != 0 {
             num |= -(1 << shift);
@@ -129,5 +129,31 @@ impl From<Leb128<i64>> for i64 {
 impl From<&Leb128<i64>> for i64 {
     fn from(value: &Leb128<i64>) -> Self {
         value.0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_leb128_u32() {
+        let bytes: [u8; 3] = [0xE5, 0x8E, 0x26];
+        let mut reader = BufReader::new(Cursor::new(bytes));
+        let result = Leb128::<u32>::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = u32::from(result.expect("The parsed value"));
+        assert_eq!(val, 624485);
+    }
+
+    #[test]
+    fn test_leb128_i32() {
+        let bytes: [u8; 3] = [0xc0, 0xbb, 0x78];
+        let mut reader = BufReader::new(Cursor::new(bytes));
+        let result = Leb128::<i32>::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = i32::from(result.expect("The parsed value"));
+        assert_eq!(val, -123456);
     }
 }

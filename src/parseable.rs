@@ -1,10 +1,10 @@
-use std::io::{BufReader, Read};
 use std::fmt::{Debug, Display};
+use std::io::{BufReader, Read};
 use std::string::FromUtf8Error;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Asked(pub usize);
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Received(pub usize);
 
 impl From<Received> for usize {
@@ -13,10 +13,10 @@ impl From<Received> for usize {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParseError {
     WrongNumBytesRead(Asked, Received),
-    Other(String)    
+    Other(String),
 }
 
 impl ParseError {
@@ -43,7 +43,6 @@ impl From<FromUtf8Error> for ParseError {
     }
 }
 
-
 pub type Result<T> = std::result::Result<T, ParseError>;
 
 pub trait Parseable {
@@ -56,9 +55,13 @@ impl Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParseError::WrongNumBytesRead(asked, received) => {
-                write!(f, "Requested {} bytes; received {} bytes", asked.0, received.0)
-            },
-            ParseError::Other(e) => write!(f, "{}", e)
+                write!(
+                    f,
+                    "Requested {} bytes; received {} bytes",
+                    asked.0, received.0
+                )
+            }
+            ParseError::Other(e) => write!(f, "{}", e),
         }
     }
 }

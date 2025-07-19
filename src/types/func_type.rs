@@ -3,7 +3,9 @@ use std::io::{BufReader, Read};
 
 use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
 use crate::types::result_type::ResultType;
+use crate::types::val_type::ValType;
 
+#[derive(Debug)]
 pub struct FuncType {
     rt1: ResultType,
     rt2: ResultType,
@@ -56,5 +58,24 @@ impl Parseable for FuncType {
         let func = FuncType { rt1: rt1, rt2: rt2 };
 
         Ok(func)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_func_type() {
+        let bytes: [u8; 2] = [0x01, 0x02];
+        let mut reader = BufReader::new(Cursor::new(bytes));
+        let result = FuncType::parse(&mut reader);
+        assert!(result.is_err());
+        let err = result.expect_err("Expected an error");
+        assert_eq!(
+            err,
+            ParseError::Other("First byte of FuncType should be 0x60".to_string())
+        )
     }
 }

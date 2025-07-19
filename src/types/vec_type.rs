@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[derive(Debug, Copy, Clone)]
 pub enum VecType {
     V128,
 }
