@@ -6,7 +6,7 @@ use crate::types::num_type::NumType;
 use crate::types::ref_type::RefType;
 use crate::types::vec_type::VecType;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum ValType {
     Num(NumType),
     Vec(VecType),

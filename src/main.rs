@@ -1,18 +1,15 @@
 use std::result::Result;
 
-#[cfg(test)]
-mod tests;
-
-mod parseable;
-mod types;
 mod module;
+mod parseable;
 mod section;
+mod types;
 
 use crate::module::Module;
 use crate::parseable::ParseError;
 
-use std::io::BufReader;
 use std::fs::File;
+use std::io::BufReader;
 
 fn main() -> Result<(), ParseError> {
     let file_path = "funcs.wasm";
@@ -20,11 +17,9 @@ fn main() -> Result<(), ParseError> {
     let mut reader = BufReader::new(file);
     let module = match Module::parse(&mut reader) {
         Ok(module) => module,
-        Err(err) => {
-            return Err(err.into())
-        }
+        Err(err) => return Err(err.into()),
     };
-    
+
     println!("Version: {}", module.version);
     println!("Sections:");
     for section in module.sections() {

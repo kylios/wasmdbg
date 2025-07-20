@@ -2,10 +2,10 @@ use std::fmt::Display;
 use std::io::{BufReader, Read};
 
 use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
+use crate::types::ref_type::RefType;
 use crate::types::result_type::ResultType;
-use crate::types::val_type::ValType;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct FuncType {
     rt1: ResultType,
     rt2: ResultType,
@@ -63,6 +63,8 @@ impl Parseable for FuncType {
 
 #[cfg(test)]
 mod tests {
+    use crate::types::{num_type::NumType, val_type::ValType, vec_type::VecType};
+
     use super::*;
     use std::io::Cursor;
 
@@ -76,6 +78,36 @@ mod tests {
         assert_eq!(
             err,
             ParseError::Other("First byte of FuncType should be 0x60".to_string())
-        )
+        );
+
+        let bytes: [u8; 10] = [0x60, 0x2, 0x6f, 0x70, 0x5, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f];
+        let mut reader = BufReader::new(Cursor::new(bytes));
+        let result = FuncType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+
+        let cmp_vec = [ValType::Ref(RefType::Extern), ValType::Ref(RefType::Func)];
+        let matching = result
+            .rt1
+            .iter()
+            .zip(&cmp_vec)
+            .filter(|&(a, b)| a == b)
+            .count();
+        assert_eq!(matching, 2);
+
+        let cmp_vec = [
+            ValType::Vec(VecType::V128),
+            ValType::Num(NumType::F64),
+            ValType::Num(NumType::F32),
+            ValType::Num(NumType::I64),
+            ValType::Num(NumType::I32),
+        ];
+        let matching = result
+            .rt2
+            .iter()
+            .zip(&cmp_vec)
+            .filter(|&(a, b)| a == b)
+            .count();
+        assert_eq!(matching, 5);
     }
 }

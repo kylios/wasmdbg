@@ -3,8 +3,18 @@ use std::io::{BufReader, Read};
 use crate::parseable::{Parseable, Result};
 use crate::types::val_type::ValType;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ResultType(Vec<ValType>);
+
+impl ResultType {
+    pub fn vec(&self) -> &std::vec::Vec<ValType> {
+        self.0.as_ref()
+    }
+
+    pub fn iter<'a>(&'a self) -> std::slice::Iter<'a, ValType> {
+        self.0.iter()
+    }
+}
 
 impl From<ResultType> for Vec<ValType> {
     fn from(value: ResultType) -> Self {
