@@ -2,8 +2,10 @@ use std::fmt::Display;
 use std::io::{BufReader, Read};
 
 use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
-use crate::types::ref_type::RefType;
 use crate::types::result_type::ResultType;
+
+#[cfg(test)]
+use crate::types::ref_type::RefType;
 
 #[derive(Debug, PartialEq)]
 pub struct FuncType {

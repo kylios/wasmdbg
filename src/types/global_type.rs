@@ -20,3 +20,9 @@ impl Parseable for GlobalType {
         Ok(GlobalType { t, r#mut })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+}

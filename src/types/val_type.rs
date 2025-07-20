@@ -45,3 +45,53 @@ impl Parseable for ValType {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{BufReader, Cursor};
+
+    #[test]
+    fn test_valtype() {
+        let bytes: [u8; 8] = [0x6f, 0x70, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 0x60];
+        let mut reader = BufReader::new(Cursor::new(bytes));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+        assert_eq!(result, ValType::Ref(RefType::Extern));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+        assert_eq!(result, ValType::Ref(RefType::Func));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+        assert_eq!(result, ValType::Vec(VecType::V128));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+        assert_eq!(result, ValType::Num(NumType::F64));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+        assert_eq!(result, ValType::Num(NumType::F32));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+        assert_eq!(result, ValType::Num(NumType::I64));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("Expected a parsed FuncType");
+        assert_eq!(result, ValType::Num(NumType::I32));
+
+        let result = ValType::parse(&mut reader);
+        assert!(result.is_err());
+    }
+}
