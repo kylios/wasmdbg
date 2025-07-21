@@ -22,6 +22,7 @@ impl Section for CodeSec {
 
 impl Display for CodeSec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "UNIMPLEMENTED")?;
         writeln!(f, "Size: {}", self.size)
     }
 }

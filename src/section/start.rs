@@ -22,6 +22,7 @@ impl Section for StartSec {
 
 impl Display for StartSec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "UNIMPLEMENTED")?;
         writeln!(f, "Size: {}", self.size)
     }
 }
