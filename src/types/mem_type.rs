@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::io::{BufReader, Read};
 
 use crate::parseable::{Parseable, Result};
@@ -15,5 +16,11 @@ impl Parseable for MemType {
         let lim = Limits::parse(reader)?;
 
         Ok(MemType { lim })
+    }
+}
+
+impl Display for MemType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "memtype: {}", self.lim)
     }
 }

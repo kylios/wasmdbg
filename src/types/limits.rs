@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::io::{BufReader, Read};
 
 use crate::parseable::{Parseable, Result};
@@ -23,6 +24,16 @@ impl Parseable for Limits {
         }
 
         Ok(Limits { min, max })
+    }
+}
+
+impl Display for Limits {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "min: {}", self.min)?;
+        match self.max {
+            Some(max) => write!(f, ", max: {}", max),
+            None => Ok(()),
+        }
     }
 }
 
