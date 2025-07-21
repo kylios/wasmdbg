@@ -35,3 +35,31 @@ impl Display for RefType {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    use crate::parseable::ParseError;
+
+    #[test]
+    fn test_reftype() {
+        let bytes: [u8; 3] = [0x70, 0x6f, 0x6e];
+        let mut reader = BufReader::new(Cursor::new(bytes));
+        let result = RefType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("The parsed value");
+        assert_eq!(result, RefType::Func);
+
+        let result = RefType::parse(&mut reader);
+        assert!(result.is_ok());
+        let result = result.expect("The parsed value");
+        assert_eq!(result, RefType::Extern);
+
+        let result = RefType::parse(&mut reader);
+        assert!(result.is_err());
+        let result = result.expect_err("A parse error");
+        assert_eq!(result, ParseError::new("Value is not RefType".to_string()));
+    }
+}
