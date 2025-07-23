@@ -2,7 +2,7 @@ use std::fmt::Display;
 use std::io::{BufReader, Read};
 
 use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
-use crate::types::num_type::NumType;
+use crate::types::num_type::{NumType, IType, FType};
 use crate::types::ref_type::RefType;
 use crate::types::vec_type::VecType;
 
@@ -32,10 +32,10 @@ impl Parseable for ValType {
         let n = reader.read(&mut buf)?;
         match n {
             1 => match u8::from_le_bytes(buf) {
-                0x7f => Ok(ValType::Num(NumType::I32)),
-                0x7e => Ok(ValType::Num(NumType::I64)),
-                0x7d => Ok(ValType::Num(NumType::F32)),
-                0x7c => Ok(ValType::Num(NumType::F64)),
+                0x7f => Ok(ValType::Num(NumType::I(IType::I32))),
+                0x7e => Ok(ValType::Num(NumType::I(IType::I64))),
+                0x7d => Ok(ValType::Num(NumType::F(FType::F32))),
+                0x7c => Ok(ValType::Num(NumType::F(FType::F64))),
                 0x7b => Ok(ValType::Vec(VecType::V128)),
                 0x70 => Ok(ValType::Ref(RefType::Func)),
                 0x6f => Ok(ValType::Ref(RefType::Extern)),
@@ -74,22 +74,22 @@ mod tests {
         let result = ValType::parse(&mut reader);
         assert!(result.is_ok());
         let result = result.expect("Expected a parsed FuncType");
-        assert_eq!(result, ValType::Num(NumType::F64));
+        assert_eq!(result, ValType::Num(NumType::F(FType::F64)));
 
         let result = ValType::parse(&mut reader);
         assert!(result.is_ok());
         let result = result.expect("Expected a parsed FuncType");
-        assert_eq!(result, ValType::Num(NumType::F32));
+        assert_eq!(result, ValType::Num(NumType::F(FType::F32)));
 
         let result = ValType::parse(&mut reader);
         assert!(result.is_ok());
         let result = result.expect("Expected a parsed FuncType");
-        assert_eq!(result, ValType::Num(NumType::I64));
+        assert_eq!(result, ValType::Num(NumType::I(IType::I64)));
 
         let result = ValType::parse(&mut reader);
         assert!(result.is_ok());
         let result = result.expect("Expected a parsed FuncType");
-        assert_eq!(result, ValType::Num(NumType::I32));
+        assert_eq!(result, ValType::Num(NumType::I(IType::I32)));
 
         let result = ValType::parse(&mut reader);
         assert!(result.is_err());

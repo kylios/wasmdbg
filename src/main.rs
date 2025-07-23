@@ -1,5 +1,6 @@
 use std::result::Result;
 
+mod instructions;
 mod module;
 mod parseable;
 mod section;
