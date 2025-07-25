@@ -11,6 +11,7 @@ use std::fmt::Display;
 use std::io::{BufReader, Read};
 
 use crate::parseable::{Asked, ParseError, Parseable, Received};
+use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
 use crate::instructions::instr::numeric::NumericInstr;
 use crate::instructions::instr::vector::VectorInstr;
@@ -21,6 +22,11 @@ use crate::instructions::instr::table::TableInstr;
 use crate::instructions::instr::memory::MemoryInstr;
 use crate::instructions::instr::control::ControlInstr;
 
+pub enum Num {
+    I32(Leb128<i32>),
+    I64(Leb128<i64>),
+    //F() // TODO: we don't have a construct for parsing floating point numbers yet
+}
 /*
  * TODO: read this whole page: https://webassembly.github.io/spec/core/syntax/instructions.html#syntax-instr
  */
@@ -61,7 +67,7 @@ impl Parseable for Instr {
         let mut buf: [u8; 1] = [0];
         let n = reader.read(&mut buf)?;
         match n {
-            1 => match Instr::from(u8::from_le_bytes(buf)) {
+            1 => match Instr::from(u8::from_le_bytes(buf), reader) {
                 Ok(instr) => Ok(instr),
                 _ => Err(ParseError::Other("Invalid instruction".to_string()))  // TODO: should return a custom error type for this
             },
@@ -71,12 +77,15 @@ impl Parseable for Instr {
 }
 
 impl Instr {
-    fn from(byte: u8) -> Result<Instr, ()> {
+    fn from(byte: u8, reader: &mut BufReader<dyn Read>) -> Result<Instr, ParseError> {
         match byte {
-            0x41 => Ok(Instr::Numeric(NumericInstr::Const(NumType::I(IType::I32)))),
-            0x42 => Ok(Instr::Numeric(NumericInstr::Const(NumType::I(IType::I64)))),
-            0x43 => Ok(Instr::Numeric(NumericInstr::Const(NumType::F(FType::F32)))),
-            0x44 => Ok(Instr::Numeric(NumericInstr::Const(NumType::F(FType::F64)))),
+            0x00 => Ok(Instr::Control(ControlInstr::Unreachable)),
+            0x01 => Ok(Instr::Control(ControlInstr::Nop)),
+
+            0x41 => Ok(Instr::Numeric(NumericInstr::Const(Num::I32(Leb128::<i32>::parse(reader)?)))),
+            0x42 => Ok(Instr::Numeric(NumericInstr::Const(Num::I64(Leb128::<i64>::parse(reader)?)))),
+            // 0x43 => Ok(Instr::Numeric(NumericInstr::Const(NumType::F(FType::F32)))),
+            // 0x44 => Ok(Instr::Numeric(NumericInstr::Const(NumType::F(FType::F64)))),
             0x45 => Ok(Instr::Numeric(NumericInstr::Eqz(IType::I32))),
             0x46 => Ok(Instr::Numeric(NumericInstr::Eq(NumType::I(IType::I32)))),
             0x47 => Ok(Instr::Numeric(NumericInstr::Ne(NumType::I(IType::I32)))),
@@ -205,7 +214,7 @@ impl Instr {
             0xc2 => Ok(Instr::Numeric(NumericInstr::IExtend8S(IType::I64))),
             0xc3 => Ok(Instr::Numeric(NumericInstr::IExtend16S(IType::I64))),
             0xc4 => Ok(Instr::Numeric(NumericInstr::I64Extend32)),
-            _ => Err(())
+            _ => Err(ParseError::Other(format!("Invalid Instruction: {}", byte)))
         }
     }
 }

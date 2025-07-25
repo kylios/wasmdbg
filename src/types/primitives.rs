@@ -60,6 +60,12 @@ impl Parseable for TypeIdx {
         Ok(TypeIdx(u32::parse(reader)?))
     }
 }
+impl Display for TypeIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl Into<u32> for FuncIdx {
     fn into(self) -> u32 {
         self.0
@@ -71,6 +77,11 @@ impl Parseable for FuncIdx {
         Self: Sized,
     {
         Ok(FuncIdx(u32::parse(reader)?))
+    }
+}
+impl Display for FuncIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 impl Into<u32> for TableIdx {
@@ -86,6 +97,11 @@ impl Parseable for TableIdx {
         Ok(TableIdx(u32::parse(reader)?))
     }
 }
+impl Display for TableIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Into<u32> for MemIdx {
     fn into(self) -> u32 {
         self.0
@@ -97,6 +113,11 @@ impl Parseable for MemIdx {
         Self: Sized,
     {
         Ok(MemIdx(u32::parse(reader)?))
+    }
+}
+impl Display for MemIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 impl Into<u32> for GlobalIdx {
@@ -112,6 +133,11 @@ impl Parseable for GlobalIdx {
         Ok(GlobalIdx(u32::parse(reader)?))
     }
 }
+impl Display for GlobalIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Into<u32> for ElemIdx {
     fn into(self) -> u32 {
         self.0
@@ -123,6 +149,11 @@ impl Parseable for ElemIdx {
         Self: Sized,
     {
         Ok(ElemIdx(u32::parse(reader)?))
+    }
+}
+impl Display for ElemIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 impl Into<u32> for DataIdx {
@@ -138,6 +169,11 @@ impl Parseable for DataIdx {
         Ok(DataIdx(u32::parse(reader)?))
     }
 }
+impl Display for DataIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Into<u32> for LocalIdx {
     fn into(self) -> u32 {
         self.0
@@ -151,6 +187,11 @@ impl Parseable for LocalIdx {
         Ok(LocalIdx(u32::parse(reader)?))
     }
 }
+impl Display for LocalIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Into<u32> for LabelIdx {
     fn into(self) -> u32 {
         self.0
@@ -162,6 +203,11 @@ impl Parseable for LabelIdx {
         Self: Sized,
     {
         Ok(LabelIdx(u32::parse(reader)?))
+    }
+}
+impl Display for LabelIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

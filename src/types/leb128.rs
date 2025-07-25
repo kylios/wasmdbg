@@ -1,4 +1,4 @@
-use std::io::{BufReader, Read};
+use std::{fmt::Display, io::{BufReader, Read}};
 
 use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
 
@@ -23,6 +23,12 @@ impl Parseable for Leb128<u32> {
             shift += 7;
         }
         Ok(Leb128(num))
+    }
+}
+
+impl Display for Leb128<u32> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -84,6 +90,12 @@ impl Parseable for Leb128<i32> {
     }
 }
 
+impl Display for Leb128<i32> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl From<Leb128<i32>> for i32 {
     fn from(value: Leb128<i32>) -> Self {
         value.0
@@ -102,6 +114,12 @@ impl Parseable for Leb128<u64> {
     }
 }
 
+impl Display for Leb128<u64> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl From<Leb128<u64>> for u64 {
     fn from(value: Leb128<u64>) -> Self {
         value.0
@@ -117,6 +135,12 @@ impl From<&Leb128<u64>> for u64 {
 impl Parseable for Leb128<i64> {
     fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<i64>> {
         Ok(Leb128(0))
+    }
+}
+
+impl Display for Leb128<i64> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
