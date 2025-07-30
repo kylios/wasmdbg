@@ -13,6 +13,8 @@ use std::io::{BufReader, Read};
 use crate::parseable::{Asked, ParseError, Parseable, Received};
 use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
+use crate::types::val_type::ValType;
+use crate::types::primitives::{TypeIdx};
 use crate::instructions::instr::numeric::NumericInstr;
 use crate::instructions::instr::vector::VectorInstr;
 use crate::instructions::instr::reference::ReferenceInstr;
@@ -27,6 +29,40 @@ pub enum Num {
     I64(Leb128<i64>),
     //F() // TODO: we don't have a construct for parsing floating point numbers yet
 }
+
+/*
+ * blocktype := typeidx | valtype
+ */
+enum BlockType {
+    TypeIdx(TypeIdx),
+    ValType(ValType)
+}
+
+impl Parseable for BlockType {
+    fn parse(reader: &mut BufReader<dyn Read>) -> crate::parseable::Result<Self>
+        where
+            Self: Sized {
+
+        // This won't work, because the `ValType::parse` is going to consume
+        // input. If it is not a ValType, then when we try to parse `TypeIdx`,
+        // the reader will have already advanced beyond this position.
+        let res = ValType::parse(reader);
+        match res {
+            Ok(v) => BlockType::ValType(v),
+            Err(e) => TypeIdx::parse(reader)
+        }
+    }
+}
+
+impl Display for BlockType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BlockType::TypeIdx(t) => write!(f, "{}", t),
+            BlockType::ValType(t) => write!(f, "{}", t)
+        }
+    }
+}
+
 /*
  * TODO: read this whole page: https://webassembly.github.io/spec/core/syntax/instructions.html#syntax-instr
  */
@@ -81,6 +117,7 @@ impl Instr {
         match byte {
             0x00 => Ok(Instr::Control(ControlInstr::Unreachable)),
             0x01 => Ok(Instr::Control(ControlInstr::Nop)),
+            0x02 => Ok(Instr::Control(ControlInstr::Block(BlockType::parse(reader)?))),
 
             0x41 => Ok(Instr::Numeric(NumericInstr::Const(Num::I32(Leb128::<i32>::parse(reader)?)))),
             0x42 => Ok(Instr::Numeric(NumericInstr::Const(Num::I64(Leb128::<i64>::parse(reader)?)))),

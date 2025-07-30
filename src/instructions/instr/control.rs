@@ -1,24 +1,7 @@
 use std::fmt::Display;
 
 use crate::types::primitives::{LabelIdx, TypeIdx, FuncIdx, TableIdx};
-use crate::types::val_type::ValType;
-
-/*
- * blocktype := typeidx | valtype
- */
-enum BlockType {
-    TypeIdx(TypeIdx),
-    ValType(ValType)
-}
-
-impl Display for BlockType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            BlockType::TypeIdx(t) => write!(f, "{}", t),
-            BlockType::ValType(t) => write!(f, "{}", t)
-        }
-    }
-}
+use crate::instructions::instr::BlockType;
 
 /*
  * instr := ...
