@@ -14,7 +14,7 @@ use crate::parseable::{ParseError, Parseable, ReadSeek};
 use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
 use crate::types::val_type::ValType;
-use crate::types::primitives::TypeIdx;
+use crate::types::primitives::{LabelIdx, TypeIdx, FuncIdx, TableIdx};
 use crate::instructions::instr::numeric::NumericInstr;
 use crate::instructions::instr::vector::VectorInstr;
 use crate::instructions::instr::reference::ReferenceInstr;
@@ -222,6 +222,18 @@ impl Instr {
             0x00 => Ok(Instr::Control(ControlInstr::Unreachable)),
             0x01 => Ok(Instr::Control(ControlInstr::Nop)),
             0x02 => Ok(Instr::Control(ControlInstr::Block(BlockType::parse(reader)?))),
+            0x03 => Ok(Instr::Control(ControlInstr::Loop(BlockType::parse(reader)?))),
+            0x04 => Ok(Instr::Control(ControlInstr::If(BlockType::parse(reader)?))),
+            0x05 => Ok(Instr::Control(ControlInstr::Else)),
+            // 0x06 - 0x0A reserved
+            0x0B => Ok(Instr::Control(ControlInstr::End)),
+            0x0C => Ok(Instr::Control(ControlInstr::Br(LabelIdx::parse(reader)?))),
+            0x0D => Ok(Instr::Control(ControlInstr::BrIf(LabelIdx::parse(reader)?))),
+            0x0E => Ok(Instr::Control(ControlInstr::BrTable(Vec::<LabelIdx>::parse(reader)?, LabelIdx::parse(reader)?))),
+            0x0F => Ok(Instr::Control(ControlInstr::Return)),
+            0x10 => Ok(Instr::Control(ControlInstr::Call(FuncIdx::parse(reader)?))),
+            0x11 => Ok(Instr::Control(ControlInstr::CallIndirect(TableIdx::parse(reader)?, TypeIdx::parse(reader)?))),
+            // 0x12 - 0x19 reserved
 
             0x41 => Ok(Instr::Numeric(NumericInstr::Const(Num::I32(Leb128::<i32>::parse(reader)?)))),
             0x42 => Ok(Instr::Numeric(NumericInstr::Const(Num::I64(Leb128::<i64>::parse(reader)?)))),
