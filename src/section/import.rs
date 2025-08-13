@@ -1,8 +1,8 @@
 use std::fmt::Display;
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 use std::result::Result;
 
-use crate::parseable::{ParseError, Parseable};
+use crate::parseable::{ParseError, Parseable, ReadSeek};
 use crate::section::Section;
 use crate::types::import_desc::ImportDesc;
 use crate::types::leb128::Leb128;
@@ -17,7 +17,7 @@ pub struct Import {
 }
 
 impl Parseable for Import {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self, ParseError>
     where
         Self: Sized,
     {
@@ -49,7 +49,7 @@ impl Section for ImportSec {
 }
 
 impl ImportSec {
-    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
+    pub fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self, ParseError>
     where
         Self: Sized,
     {

@@ -1,7 +1,7 @@
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 use std::result::Result;
 
-use crate::parseable::{ParseError, Parseable, Received};
+use crate::parseable::{ParseError, Parseable, ReadSeek, Received};
 use crate::section::code::CodeSec;
 use crate::section::custom::{CustomSec, CustomSecParseError};
 use crate::section::data::DataSec;
@@ -81,7 +81,7 @@ impl Into<ParseError> for ModuleParseError {
 }
 
 impl Module {
-    fn parse_magic(reader: &mut BufReader<dyn Read>) -> Result<(), ModuleParseError> {
+    fn parse_magic(reader: &mut BufReader<dyn ReadSeek>) -> Result<(), ModuleParseError> {
         let magic = u32::parse(reader)?;
         let bytes = magic.to_le_bytes();
 
@@ -93,7 +93,7 @@ impl Module {
         Ok(())
     }
 
-    fn parse_version(reader: &mut BufReader<dyn Read>) -> Result<u32, ModuleParseError> {
+    fn parse_version(reader: &mut BufReader<dyn ReadSeek>) -> Result<u32, ModuleParseError> {
         match u32::parse(reader) {
             Err(e) => Err(ModuleParseError::Parse(e)),
             Ok(version) => Ok(version),
@@ -147,7 +147,7 @@ impl Module {
     }
 
     pub fn parse(
-        reader: &mut std::io::BufReader<dyn std::io::Read>,
+        reader: &mut std::io::BufReader<dyn ReadSeek>,
     ) -> Result<Module, ModuleParseError> {
         Self::parse_magic(reader)?;
         let version = Self::parse_version(reader)?;

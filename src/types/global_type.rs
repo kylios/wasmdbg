@@ -1,6 +1,6 @@
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, Result, ReadSeek};
 use crate::types::r#mut::Mut;
 use crate::types::val_type::ValType;
 
@@ -10,7 +10,7 @@ pub struct GlobalType {
 }
 
 impl Parseable for GlobalType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

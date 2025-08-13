@@ -1,5 +1,5 @@
 use std::fmt::{Debug, Display};
-use std::io::{BufReader, Read};
+use std::io::{BufReader, Read, Seek};
 use std::string::FromUtf8Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -45,8 +45,11 @@ impl From<FromUtf8Error> for ParseError {
 
 pub type Result<T> = std::result::Result<T, ParseError>;
 
+pub trait ReadSeek: Read + Seek {}
+impl<T: Read + Seek> ReadSeek for T {}
+
 pub trait Parseable {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized;
 }

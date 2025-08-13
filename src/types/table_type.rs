@@ -1,6 +1,6 @@
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, Result, ReadSeek};
 use crate::types::limits::Limits;
 use crate::types::ref_type::RefType;
 
@@ -10,7 +10,7 @@ pub struct TableType {
 }
 
 impl Parseable for TableType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

@@ -1,7 +1,7 @@
 use std::fmt::Display;
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, Result, ReadSeek};
 use crate::section::Section;
 use crate::types::func_type::FuncType;
 use crate::types::leb128::Leb128;
@@ -35,7 +35,7 @@ impl Section for TypeSec {
 }
 
 impl TypeSec {
-    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    pub fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

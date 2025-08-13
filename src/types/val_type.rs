@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
+use crate::parseable::{Asked, ParseError, ReadSeek, Parseable, Received, Result};
 use crate::types::num_type::{NumType, IType, FType};
 use crate::types::ref_type::RefType;
 use crate::types::vec_type::VecType;
@@ -23,8 +23,14 @@ impl Display for ValType {
     }
 }
 
+impl ValType {
+    pub fn parse_len() -> usize {
+        1
+    }
+}
+
 impl Parseable for ValType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

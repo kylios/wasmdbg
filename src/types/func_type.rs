@@ -1,8 +1,9 @@
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
+use crate::parseable::{Asked, ParseError, Parseable, ReadSeek, Received, Result};
 use crate::types::result_type::ResultType;
+use crate::types::num_type::{FType, IType};
 
 #[cfg(test)]
 use crate::types::ref_type::RefType;
@@ -14,7 +15,7 @@ pub struct FuncType {
 }
 
 impl FuncType {
-    fn parse_first_byte(reader: &mut BufReader<dyn Read>) -> Result<u8> {
+    fn parse_first_byte(reader: &mut BufReader<dyn ReadSeek>) -> Result<u8> {
         let mut buf: [u8; 1] = [0; 1];
         let n = reader.read(&mut buf)?;
         match n {
@@ -42,7 +43,7 @@ impl Display for FuncType {
 }
 
 impl Parseable for FuncType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -99,10 +100,10 @@ mod tests {
 
         let cmp_vec = [
             ValType::Vec(VecType::V128),
-            ValType::Num(NumType::F64),
-            ValType::Num(NumType::F32),
-            ValType::Num(NumType::I64),
-            ValType::Num(NumType::I32),
+            ValType::Num(NumType::F(FType::F64)),
+            ValType::Num(NumType::F(FType::F32)),
+            ValType::Num(NumType::I(IType::I64)),
+            ValType::Num(NumType::I(IType::I32)),
         ];
         let matching = result
             .rt2

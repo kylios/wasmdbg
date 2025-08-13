@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
+use crate::parseable::{Asked, ParseError, ReadSeek, Parseable, Received, Result};
 use crate::types::leb128::Leb128;
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
@@ -20,7 +20,7 @@ impl Display for Size {
 }
 
 impl Parseable for Size {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -53,7 +53,7 @@ impl Into<u32> for TypeIdx {
     }
 }
 impl Parseable for TypeIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -72,7 +72,7 @@ impl Into<u32> for FuncIdx {
     }
 }
 impl Parseable for FuncIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -90,7 +90,7 @@ impl Into<u32> for TableIdx {
     }
 }
 impl Parseable for TableIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -108,7 +108,7 @@ impl Into<u32> for MemIdx {
     }
 }
 impl Parseable for MemIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -126,7 +126,7 @@ impl Into<u32> for GlobalIdx {
     }
 }
 impl Parseable for GlobalIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -144,7 +144,7 @@ impl Into<u32> for ElemIdx {
     }
 }
 impl Parseable for ElemIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -162,7 +162,7 @@ impl Into<u32> for DataIdx {
     }
 }
 impl Parseable for DataIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -180,7 +180,7 @@ impl Into<u32> for LocalIdx {
     }
 }
 impl Parseable for LocalIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -198,7 +198,7 @@ impl Into<u32> for LabelIdx {
     }
 }
 impl Parseable for LabelIdx {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -212,7 +212,7 @@ impl Display for LabelIdx {
 }
 
 impl<T: Parseable> Parseable for Vec<T> {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Vec<T>> {
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Vec<T>> {
         let num = u32::from(Leb128::<u32>::parse(reader)?);
         let mut vec: Vec<T> = Vec::new();
         for _ in 0..num {
@@ -224,7 +224,7 @@ impl<T: Parseable> Parseable for Vec<T> {
 }
 
 impl Parseable for String {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<String> {
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<String> {
         let vec = Vec::<u8>::parse(reader)?;
         let string = String::from_utf8(vec)?;
         Ok(string)
@@ -232,7 +232,7 @@ impl Parseable for String {
 }
 
 impl Parseable for u8 {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -246,7 +246,7 @@ impl Parseable for u8 {
 }
 
 impl Parseable for u32 {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<u32> {
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<u32> {
         let mut buf: [u8; 4] = [0; 4];
         let n = reader.read(&mut buf[..]).unwrap();
         match n {

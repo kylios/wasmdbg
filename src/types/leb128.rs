@@ -1,11 +1,12 @@
-use std::{fmt::Display, io::{BufReader, Read}};
+use std::fmt::Display;
+use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
+use crate::parseable::{Asked, ParseError, Parseable, ReadSeek, Received, Result};
 
 pub struct Leb128<T>(T);
 
 impl Parseable for Leb128<u32> {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<u32>> {
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Leb128<u32>> {
         let mut num: u32 = 0;
         let mut shift: u32 = 0;
         let mut buf: [u8; 1] = [0];
@@ -63,7 +64,7 @@ impl Parseable for Leb128<i32> {
     //    0x78     0xBB     0xC0  In hexadecimal
     //
     //→ 0xC0 0xBB 0x78            Output stream (LSB to MSB)
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<i32>> {
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Leb128<i32>> {
         let mut num: i32 = 0;
         let mut shift: u32 = 0;
         let mut buf: [u8; 1] = [0];
@@ -109,7 +110,7 @@ impl From<&Leb128<i32>> for i32 {
 }
 
 impl Parseable for Leb128<u64> {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<u64>> {
+    fn parse(_reader: &mut BufReader<dyn ReadSeek>) -> Result<Leb128<u64>> {
         Ok(Leb128(0))
     }
 }
@@ -133,7 +134,7 @@ impl From<&Leb128<u64>> for u64 {
 }
 
 impl Parseable for Leb128<i64> {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Leb128<i64>> {
+    fn parse(_reader: &mut BufReader<dyn ReadSeek>) -> Result<Leb128<i64>> {
         Ok(Leb128(0))
     }
 }

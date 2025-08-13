@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, Parseable, Received, Result};
+use crate::parseable::{Asked, Parseable, Received, Result, ReadSeek};
 use crate::section::Section;
 use crate::types::leb128::Leb128;
 use crate::types::primitives::Size;
@@ -28,7 +28,7 @@ impl Display for StartSec {
 }
 
 impl StartSec {
-    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    pub fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

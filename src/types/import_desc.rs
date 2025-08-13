@@ -1,6 +1,6 @@
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, Result, ReadSeek};
 use crate::types::global_type::GlobalType;
 use crate::types::mem_type::MemType;
 use crate::types::primitives::TypeIdx;
@@ -14,7 +14,7 @@ pub struct ImportDesc {
 }
 
 impl Parseable for ImportDesc {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

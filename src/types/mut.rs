@@ -1,6 +1,6 @@
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
+use crate::parseable::{Asked, ParseError, ReadSeek, Parseable, Received, Result};
 
 pub enum Mut {
     Val(u8),
@@ -10,7 +10,7 @@ pub const CONST: Mut = Mut::Val(0x0);
 pub const VAR: Mut = Mut::Val(0x1);
 
 impl Parseable for Mut {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

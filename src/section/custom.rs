@@ -1,8 +1,8 @@
 use std::fmt::Display;
-use std::io::{BufReader, Read as IoRead};
+use std::io::{BufReader, Read as IORead};
 use std::result::Result;
 
-use crate::parseable::{Asked, ParseError, Parseable, Received};
+use crate::parseable::{Asked, ParseError, Parseable, Received, ReadSeek};
 use crate::section::{Section, SectionParseError};
 use crate::types::leb128::Leb128;
 use crate::types::primitives::Size;
@@ -57,7 +57,7 @@ impl Into<SectionParseError> for CustomSecParseError {
     }
 }
 impl CustomSec {
-    pub fn parse(reader: &mut BufReader<dyn IoRead>) -> Result<Self, CustomSecParseError>
+    pub fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self, CustomSecParseError>
     where
         Self: Sized,
     {

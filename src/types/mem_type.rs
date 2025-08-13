@@ -1,7 +1,7 @@
 use std::fmt::Display;
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, Result, ReadSeek};
 use crate::types::limits::Limits;
 
 pub struct MemType {
@@ -9,7 +9,7 @@ pub struct MemType {
 }
 
 impl Parseable for MemType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

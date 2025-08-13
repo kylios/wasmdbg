@@ -10,11 +10,11 @@ pub mod control;
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, ParseError, Parseable, Received};
+use crate::parseable::{ParseError, Parseable, ReadSeek};
 use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
 use crate::types::val_type::ValType;
-use crate::types::primitives::{TypeIdx};
+use crate::types::primitives::TypeIdx;
 use crate::instructions::instr::numeric::NumericInstr;
 use crate::instructions::instr::vector::VectorInstr;
 use crate::instructions::instr::reference::ReferenceInstr;
@@ -32,24 +32,37 @@ pub enum Num {
 
 /*
  * blocktype := typeidx | valtype
+ *
+ * Note:
+ * Value types can occur in contexts where type indices are also allowed,
+ * such as in the case of block types. Thus, the binary format for types
+ * corresponds to the signed LEB128 encoding of small negative values, so
+ * that they can coexist with (positive) type indices in the future.
+ * This affects the parsing of block types, as we will always attempt to
+ * parse the `valtype` first, and if it fails, we will backtrack and try to
+ * parse a `typeidx`.
  */
+#[derive(Debug, PartialEq)]
 enum BlockType {
     TypeIdx(TypeIdx),
     ValType(ValType)
 }
 
 impl Parseable for BlockType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> crate::parseable::Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<BlockType, ParseError>
         where
             Self: Sized {
 
-        // This won't work, because the `ValType::parse` is going to consume
-        // input. If it is not a ValType, then when we try to parse `TypeIdx`,
-        // the reader will have already advanced beyond this position.
         let res = ValType::parse(reader);
         match res {
-            Ok(v) => BlockType::ValType(v),
-            Err(e) => TypeIdx::parse(reader)
+            Ok(v) => Ok(BlockType::ValType(v)),
+            Err(_) => {
+                // If the `ValType` failed to parse, then we need to backtrack
+                // the parsing and try to parse a `TypeIdx`
+                reader.seek_relative(-1 * ValType::parse_len() as i64)?;
+                let type_idx = TypeIdx::parse(reader)?;
+                Ok(BlockType::TypeIdx(type_idx))
+            }
         }
     }
 }
@@ -60,6 +73,80 @@ impl Display for BlockType {
             BlockType::TypeIdx(t) => write!(f, "{}", t),
             BlockType::ValType(t) => write!(f, "{}", t)
         }
+    }
+}
+
+#[cfg(test)]
+mod block_type_tests {
+    use super::*;
+    use crate::types::ref_type::RefType;
+    use crate::types::vec_type::VecType;
+    use crate::types::num_type::NumType;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_parse_block_type_ok() {
+        // Test parsing all `valtype` types, then test parsing
+        // the value as a `typeidx`. When parsing `typeidx` values
+        // that fall within the range `0x6F` - `0x7F` (the range of
+        // `valtype` types), the `typeidx` should be represented as
+        // two bytes: `0xEF 0x00` - `0xFF 0x00` (decimal values 111 - 127).
+        let bytes: [u8; 11] = [
+            0x6F,
+            0x70,
+            0x7B,
+            0x7C,
+            0x7D,
+            0x7E,
+            0x7F,
+            0xEF, 0x00,
+            0xFF, 0x00,
+        ];
+        let mut reader = BufReader::new(Cursor::new(bytes));
+        let result = BlockType::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = result.expect("The parsed value");
+        assert_eq!(val, BlockType::ValType(ValType::Ref(RefType::Extern)));
+
+        let result = BlockType::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = result.expect("The parsed value");
+        assert_eq!(val, BlockType::ValType(ValType::Ref(RefType::Func)));
+
+        let result = BlockType::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = result.expect("The parsed value");
+        assert_eq!(val, BlockType::ValType(ValType::Vec(VecType::V128)));
+
+        let result = BlockType::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = result.expect("The parsed value");
+        assert_eq!(val, BlockType::ValType(ValType::Num(NumType::F(FType::F64))));
+
+        let result = BlockType::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = result.expect("The parsed value");
+        assert_eq!(val, BlockType::ValType(ValType::Num(NumType::F(FType::F32))));
+
+        let result = BlockType::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = result.expect("The parsed value");
+        assert_eq!(val, BlockType::ValType(ValType::Num(NumType::I(IType::I64))));
+
+        let result = BlockType::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = result.expect("The parsed value");
+        assert_eq!(val, BlockType::ValType(ValType::Num(NumType::I(IType::I32))));
+
+        let result = Leb128::<u32>::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = u32::from(result.expect("The parsed value"));
+        assert_eq!(val, 111);
+
+        let result = Leb128::<u32>::parse(&mut reader);
+        assert!(result.is_ok());
+        let val = u32::from(result.expect("The parsed value"));
+        assert_eq!(val, 127);
     }
 }
 
@@ -92,28 +179,45 @@ impl Display for Instr {
     }
 }
 
+struct Asked(usize);
+struct Received(usize);
+
+pub enum InstrParseErr {
+    WrongNumBytesRead(Asked, Received),
+    InvalidInstr(u8),
+    IoError(std::io::Error),
+    ParseError(ParseError)
+}
+
+impl From<std::io::Error> for InstrParseErr {
+    fn from(err: std::io::Error) -> Self {
+        InstrParseErr::IoError(err)
+    }
+}
+
+impl From<ParseError> for InstrParseErr {
+    fn from(err: ParseError) -> Self {
+        InstrParseErr::ParseError(err)
+    }
+}
+
 // TODO: can we implement Parseable for this type? The match statement above is non-exhaustive,
 // so we will need to return some type that indicates a byte is not a NumericInstr. Perhaps
 // the parsing should occur at a higher level where the matching can be more exhaustive, and
 // the correct instruction returned, whether it's a NumericInstr or something else.
-impl Parseable for Instr {
-    fn parse(reader: &mut BufReader<dyn Read>) -> crate::parseable::Result<Self>
+impl Instr {
+    pub fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Instr, InstrParseErr>
         where
             Self: Sized {
         let mut buf: [u8; 1] = [0];
         let n = reader.read(&mut buf)?;
         match n {
-            1 => match Instr::from(u8::from_le_bytes(buf), reader) {
-                Ok(instr) => Ok(instr),
-                _ => Err(ParseError::Other("Invalid instruction".to_string()))  // TODO: should return a custom error type for this
-            },
-            n => Err(ParseError::WrongNumBytesRead(Asked(1), Received(n)))
+            1 => Instr::from(u8::from_le_bytes(buf), reader),
+            n => Err(InstrParseErr::WrongNumBytesRead(Asked(1), Received(n)))
         }
     }
-}
 
-impl Instr {
-    fn from(byte: u8, reader: &mut BufReader<dyn Read>) -> Result<Instr, ParseError> {
+    fn from(byte: u8, reader: &mut BufReader<dyn ReadSeek>) -> Result<Instr, InstrParseErr> {
         match byte {
             0x00 => Ok(Instr::Control(ControlInstr::Unreachable)),
             0x01 => Ok(Instr::Control(ControlInstr::Nop)),
@@ -251,7 +355,7 @@ impl Instr {
             0xc2 => Ok(Instr::Numeric(NumericInstr::IExtend8S(IType::I64))),
             0xc3 => Ok(Instr::Numeric(NumericInstr::IExtend16S(IType::I64))),
             0xc4 => Ok(Instr::Numeric(NumericInstr::I64Extend32)),
-            _ => Err(ParseError::Other(format!("Invalid Instruction: {}", byte)))
+            _ => Err(InstrParseErr::InvalidInstr(byte))
         }
     }
 }

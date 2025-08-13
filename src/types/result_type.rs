@@ -1,6 +1,6 @@
-use std::io::{BufReader, Read};
+use std::io::BufReader;
 
-use crate::parseable::{Parseable, Result};
+use crate::parseable::{Parseable, ReadSeek, Result};
 use crate::types::val_type::ValType;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -41,7 +41,7 @@ impl<'a> IntoIterator for &'a ResultType {
 }
 
 impl Parseable for ResultType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {

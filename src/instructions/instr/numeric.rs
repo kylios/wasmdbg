@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
 use crate::instructions::instr::Num;
 

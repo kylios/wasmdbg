@@ -2,7 +2,7 @@ use std::fmt::Display;
 use std::io::{BufReader, Read};
 use std::result::Result;
 
-use crate::parseable::{Asked, ParseError, Parseable, Received};
+use crate::parseable::{Asked, ParseError, Parseable, Received, ReadSeek};
 use crate::section::Section;
 use crate::types::leb128::Leb128;
 use crate::types::primitives::{Size, TypeIdx};
@@ -35,7 +35,7 @@ pub struct Func {
 }
 
 impl Parseable for Func {
-    fn parse(reader: &mut BufReader<dyn Read>) -> crate::parseable::Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> crate::parseable::Result<Self>
     where
         Self: Sized,
     {
@@ -61,7 +61,7 @@ impl Section for FunctionSec {
 }
 
 impl FunctionSec {
-    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
+    pub fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self, ParseError>
     where
         Self: Sized,
     {

@@ -2,7 +2,7 @@ use std::fmt::Display;
 use std::io::{BufReader, Read};
 use std::result::Result;
 
-use crate::parseable::{Asked, ParseError, Parseable, Received};
+use crate::parseable::{Asked, ParseError, Parseable, Received, ReadSeek};
 use crate::section::Section;
 use crate::types::leb128::Leb128;
 use crate::types::primitives::Size;
@@ -22,7 +22,7 @@ impl Section for GlobalSec {
 }
 
 impl GlobalSec {
-    pub fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self, ParseError>
+    pub fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self, ParseError>
     where
         Self: Sized,
     {

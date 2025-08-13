@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::io::{BufReader, Read};
 
-use crate::parseable::{Asked, ParseError, Parseable, Received, Result};
+use crate::parseable::{Asked, ParseError, Parseable, ReadSeek, Received, Result};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum RefType {
@@ -10,7 +10,7 @@ pub enum RefType {
 }
 
 impl Parseable for RefType {
-    fn parse(reader: &mut BufReader<dyn Read>) -> Result<Self>
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
     where
         Self: Sized,
     {
