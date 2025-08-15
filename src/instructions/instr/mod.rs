@@ -43,7 +43,7 @@ pub enum Num {
  * parse a `typeidx`.
  */
 #[derive(Debug, PartialEq)]
-enum BlockType {
+pub enum BlockType {
     TypeIdx(TypeIdx),
     ValType(ValType)
 }
