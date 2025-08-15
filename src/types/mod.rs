@@ -12,3 +12,4 @@ pub mod result_type;
 pub mod table_type;
 pub mod val_type;
 pub mod vec_type;
+pub mod mem_arg;

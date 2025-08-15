@@ -46,6 +46,8 @@ pub struct DataIdx(pub u32);
 pub struct LocalIdx(pub u32);
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct LabelIdx(pub u32);
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct LaneIdx(pub u8);
 
 impl Into<u32> for TypeIdx {
     fn into(self) -> u32 {
@@ -206,6 +208,24 @@ impl Parseable for LabelIdx {
     }
 }
 impl Display for LabelIdx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+impl Into<u8> for LaneIdx {
+    fn into(self) -> u8 {
+        self.0
+    }
+}
+impl Parseable for LaneIdx {
+    fn parse(reader: &mut BufReader<dyn ReadSeek>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        Ok(LaneIdx(u8::parse(reader)?))
+    }
+}
+impl Display for LaneIdx {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
