@@ -14,7 +14,8 @@ use crate::parseable::{ParseError, Parseable, ReadSeek};
 use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
 use crate::types::val_type::ValType;
-use crate::types::primitives::{LabelIdx, TypeIdx, FuncIdx, TableIdx};
+use crate::types::primitives::{LabelIdx, TypeIdx, FuncIdx, TableIdx, DataIdx, LaneIdx};
+use crate::types::mem_arg::MemArg;
 use crate::instructions::instr::numeric::NumericInstr;
 use crate::instructions::instr::vector::VectorInstr;
 use crate::instructions::instr::reference::ReferenceInstr;
@@ -235,6 +236,34 @@ impl Instr {
             0x11 => Ok(Instr::Control(ControlInstr::CallIndirect(TableIdx::parse(reader)?, TypeIdx::parse(reader)?))),
             // 0x12 - 0x19 reserved
 
+            // Memory Instructions
+            0x28 => Ok(Instr::Memory(MemoryInstr::I32Load(MemArg::parse(reader)?))),
+            0x29 => Ok(Instr::Memory(MemoryInstr::I64Load(MemArg::parse(reader)?))),
+            0x2A => Ok(Instr::Memory(MemoryInstr::F32Load(MemArg::parse(reader)?))),
+            0x2B => Ok(Instr::Memory(MemoryInstr::F64Load(MemArg::parse(reader)?))),
+            0x2C => Ok(Instr::Memory(MemoryInstr::I32Load8S(MemArg::parse(reader)?))),
+            0x2D => Ok(Instr::Memory(MemoryInstr::I32Load8U(MemArg::parse(reader)?))),
+            0x2E => Ok(Instr::Memory(MemoryInstr::I32Load16S(MemArg::parse(reader)?))),
+            0x2F => Ok(Instr::Memory(MemoryInstr::I32Load16U(MemArg::parse(reader)?))),
+            0x30 => Ok(Instr::Memory(MemoryInstr::I64Load8S(MemArg::parse(reader)?))),
+            0x31 => Ok(Instr::Memory(MemoryInstr::I64Load8U(MemArg::parse(reader)?))),
+            0x32 => Ok(Instr::Memory(MemoryInstr::I64Load16S(MemArg::parse(reader)?))),
+            0x33 => Ok(Instr::Memory(MemoryInstr::I64Load16U(MemArg::parse(reader)?))),
+            0x34 => Ok(Instr::Memory(MemoryInstr::I64Load32S(MemArg::parse(reader)?))),
+            0x35 => Ok(Instr::Memory(MemoryInstr::I64Load32U(MemArg::parse(reader)?))),
+            0x36 => Ok(Instr::Memory(MemoryInstr::I32Store(MemArg::parse(reader)?))),
+            0x37 => Ok(Instr::Memory(MemoryInstr::I64Store(MemArg::parse(reader)?))),
+            0x38 => Ok(Instr::Memory(MemoryInstr::F32Store(MemArg::parse(reader)?))),
+            0x39 => Ok(Instr::Memory(MemoryInstr::F64Store(MemArg::parse(reader)?))),
+            0x3A => Ok(Instr::Memory(MemoryInstr::I32Store8(MemArg::parse(reader)?))),
+            0x3B => Ok(Instr::Memory(MemoryInstr::I32Store16(MemArg::parse(reader)?))),
+            0x3C => Ok(Instr::Memory(MemoryInstr::I64Store8(MemArg::parse(reader)?))),
+            0x3D => Ok(Instr::Memory(MemoryInstr::I64Store16(MemArg::parse(reader)?))),
+            0x3E => Ok(Instr::Memory(MemoryInstr::I64Store32(MemArg::parse(reader)?))),
+            0x3F => Ok(Instr::Memory(MemoryInstr::MemorySize)),
+            0x40 => Ok(Instr::Memory(MemoryInstr::MemoryGrow)),
+
+            // Numeric Instructions
             0x41 => Ok(Instr::Numeric(NumericInstr::Const(Num::I32(Leb128::<i32>::parse(reader)?)))),
             0x42 => Ok(Instr::Numeric(NumericInstr::Const(Num::I64(Leb128::<i64>::parse(reader)?)))),
             // 0x43 => Ok(Instr::Numeric(NumericInstr::Const(NumType::F(FType::F32)))),
@@ -367,6 +396,68 @@ impl Instr {
             0xc2 => Ok(Instr::Numeric(NumericInstr::IExtend8S(IType::I64))),
             0xc3 => Ok(Instr::Numeric(NumericInstr::IExtend16S(IType::I64))),
             0xc4 => Ok(Instr::Numeric(NumericInstr::I64Extend32)),
+
+            0xFC => {
+                let mut buf: [u8; 1] = [0];
+                let n = reader.read(&mut buf)?;
+                let byte = u8::from_le_bytes(buf);
+                match n {
+                    1 => match byte {
+                        0x00 => Ok(Instr::Numeric(NumericInstr::ITruncSatS(IType::I32, FType::F32))),
+                        0x01 => Ok(Instr::Numeric(NumericInstr::ITruncSatU(IType::I32, FType::F32))),
+                        0x02 => Ok(Instr::Numeric(NumericInstr::ITruncSatS(IType::I32, FType::F64))),
+                        0x03 => Ok(Instr::Numeric(NumericInstr::ITruncSatU(IType::I32, FType::F64))),
+                        0x04 => Ok(Instr::Numeric(NumericInstr::ITruncSatS(IType::I64, FType::F32))),
+                        0x05 => Ok(Instr::Numeric(NumericInstr::ITruncSatU(IType::I64, FType::F32))),
+                        0x06 => Ok(Instr::Numeric(NumericInstr::ITruncSatS(IType::I64, FType::F64))),
+                        0x07 => Ok(Instr::Numeric(NumericInstr::ITruncSatU(IType::I64, FType::F64))),
+                        0x08 => Ok(Instr::Memory(MemoryInstr::Init(DataIdx::parse(reader)?))),
+                        0x09 => Ok(Instr::Memory(MemoryInstr::DataDrop(DataIdx::parse(reader)?))),
+                        0x0A => Ok(Instr::Memory(MemoryInstr::MemoryCopy)),
+                        0x0B => Ok(Instr::Memory(MemoryInstr::MemoryFill)),
+
+                        // TODO: two bytes!!!
+                        _ => Err(InstrParseErr::InvalidInstr(byte))
+                    }
+                    n => Err(InstrParseErr::WrongNumBytesRead(Asked(1), Received(n)))
+                }
+            }
+            0xFD => {
+                let mut buf: [u8; 1] = [0];
+                let n = reader.read(&mut buf)?;
+                let byte = u8::from_le_bytes(buf);
+                match n {
+                    1 => match byte {
+                        0x00 => Ok(Instr::Memory(MemoryInstr::V128Load(MemArg::parse(reader)?))),
+                        0x01 => Ok(Instr::Memory(MemoryInstr::V128Load8x8S(MemArg::parse(reader)?))),
+                        0x02 => Ok(Instr::Memory(MemoryInstr::V128Load8x8U(MemArg::parse(reader)?))),
+                        0x03 => Ok(Instr::Memory(MemoryInstr::V128Load16x4S(MemArg::parse(reader)?))),
+                        0x04 => Ok(Instr::Memory(MemoryInstr::V128Load16x4U(MemArg::parse(reader)?))),
+                        0x05 => Ok(Instr::Memory(MemoryInstr::V128Load32x2S(MemArg::parse(reader)?))),
+                        0x06 => Ok(Instr::Memory(MemoryInstr::V128Load32x2U(MemArg::parse(reader)?))),
+                        0x07 => Ok(Instr::Memory(MemoryInstr::V128Load8Splat(MemArg::parse(reader)?))),
+                        0x08 => Ok(Instr::Memory(MemoryInstr::V128Load16Splat(MemArg::parse(reader)?))),
+                        0x09 => Ok(Instr::Memory(MemoryInstr::V128Load32Splat(MemArg::parse(reader)?))),
+                        0x0A => Ok(Instr::Memory(MemoryInstr::V128Load64Splat(MemArg::parse(reader)?))),
+                        0x0B => Ok(Instr::Memory(MemoryInstr::V128Store(MemArg::parse(reader)?))),
+
+                        0x54 => Ok(Instr::Memory(MemoryInstr::V128Load8Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x55 => Ok(Instr::Memory(MemoryInstr::V128Load16Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x56 => Ok(Instr::Memory(MemoryInstr::V128Load32Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x57 => Ok(Instr::Memory(MemoryInstr::V128Load64Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x58 => Ok(Instr::Memory(MemoryInstr::V128Store8Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x59 => Ok(Instr::Memory(MemoryInstr::V128Store16Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x5A => Ok(Instr::Memory(MemoryInstr::V128Store32Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x5B => Ok(Instr::Memory(MemoryInstr::V128Store64Lane(MemArg::parse(reader)?, LaneIdx::parse(reader)?))),
+                        0x5C => Ok(Instr::Memory(MemoryInstr::V128Load32Zero(MemArg::parse(reader)?))),
+                        0x5D => Ok(Instr::Memory(MemoryInstr::V128Load64Zero(MemArg::parse(reader)?))),
+
+                        // TODO: two bytes!!!
+                        _ => Err(InstrParseErr::InvalidInstr(byte))
+                    }
+                    n => Err(InstrParseErr::WrongNumBytesRead(Asked(1), Received(n)))
+                }
+            }
             _ => Err(InstrParseErr::InvalidInstr(byte))
         }
     }

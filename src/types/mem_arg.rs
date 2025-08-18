@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::io::{BufReader, Read};
 
 use crate::types::leb128::Leb128;
@@ -17,6 +18,12 @@ impl Parseable for MemArg {
             offset: u32::from(offset),
             align: u32::from(align)
         })
+    }
+}
+
+impl Display for MemArg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "mem_arg(offset={}, align={})", self.offset, self.align)
     }
 }
 
