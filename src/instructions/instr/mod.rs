@@ -236,6 +236,10 @@ impl Instr {
             0x11 => Ok(Instr::Control(ControlInstr::CallIndirect(TableIdx::parse(reader)?, TypeIdx::parse(reader)?))),
             // 0x12 - 0x19 reserved
 
+            0x1A => Ok(Instr::Parametric(ParametricInstr::Drop)),
+            0x1B => Ok(Instr::Parametric(ParametricInstr::Select(None))),
+            0x1C => Ok(Instr::Parametric(ParametricInstr::Select(Some(ValType::parse(reader)?)))),
+
             // Memory Instructions
             0x28 => Ok(Instr::Memory(MemoryInstr::I32Load(MemArg::parse(reader)?))),
             0x29 => Ok(Instr::Memory(MemoryInstr::I64Load(MemArg::parse(reader)?))),
