@@ -13,6 +13,7 @@ use std::io::{BufReader, Read};
 use crate::parseable::{ParseError, Parseable, ReadSeek};
 use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
+use crate::types::ref_type::RefType;
 use crate::types::val_type::ValType;
 use crate::types::primitives::{LabelIdx, TypeIdx, FuncIdx, TableIdx, DataIdx, LaneIdx};
 use crate::types::mem_arg::MemArg;
@@ -400,6 +401,10 @@ impl Instr {
             0xc2 => Ok(Instr::Numeric(NumericInstr::IExtend8S(IType::I64))),
             0xc3 => Ok(Instr::Numeric(NumericInstr::IExtend16S(IType::I64))),
             0xc4 => Ok(Instr::Numeric(NumericInstr::I64Extend32)),
+
+            0xD0 => Ok(Instr::Reference(ReferenceInstr::Null(RefType::parse(reader)?))),
+            0xD1 => Ok(Instr::Reference(ReferenceInstr::IsNull)),
+            0xD2 => Ok(Instr::Reference(ReferenceInstr::Func(FuncIdx::parse(reader)?))),
 
             0xFC => {
                 let mut buf: [u8; 1] = [0];
