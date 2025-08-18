@@ -15,7 +15,11 @@ use crate::types::leb128::Leb128;
 use crate::types::num_type::{NumType, IType, FType};
 use crate::types::ref_type::RefType;
 use crate::types::val_type::ValType;
-use crate::types::primitives::{LabelIdx, TypeIdx, FuncIdx, TableIdx, DataIdx, LaneIdx};
+use crate::types::primitives::{
+    LabelIdx, TypeIdx, FuncIdx, TableIdx,
+    DataIdx, LaneIdx, ElemIdx, LocalIdx,
+    GlobalIdx
+};
 use crate::types::mem_arg::MemArg;
 use crate::instructions::instr::numeric::NumericInstr;
 use crate::instructions::instr::vector::VectorInstr;
@@ -241,6 +245,14 @@ impl Instr {
             0x1B => Ok(Instr::Parametric(ParametricInstr::Select(None))),
             0x1C => Ok(Instr::Parametric(ParametricInstr::Select(Some(ValType::parse(reader)?)))),
 
+            0x20 => Ok(Instr::Variable(VariableInstr::LocalGet(LocalIdx::parse(reader)?))),
+            0x21 => Ok(Instr::Variable(VariableInstr::LocalSet(LocalIdx::parse(reader)?))),
+            0x22 => Ok(Instr::Variable(VariableInstr::LocalTee(LocalIdx::parse(reader)?))),
+            0x23 => Ok(Instr::Variable(VariableInstr::GlobalGet(GlobalIdx::parse(reader)?))),
+            0x24 => Ok(Instr::Variable(VariableInstr::GlobalSet(GlobalIdx::parse(reader)?))),
+            0x25 => Ok(Instr::Table(TableInstr::Get(TableIdx::parse(reader)?))),
+            0x26 => Ok(Instr::Table(TableInstr::Set(TableIdx::parse(reader)?))),
+
             // Memory Instructions
             0x28 => Ok(Instr::Memory(MemoryInstr::I32Load(MemArg::parse(reader)?))),
             0x29 => Ok(Instr::Memory(MemoryInstr::I64Load(MemArg::parse(reader)?))),
@@ -424,6 +436,13 @@ impl Instr {
                         0x09 => Ok(Instr::Memory(MemoryInstr::DataDrop(DataIdx::parse(reader)?))),
                         0x0A => Ok(Instr::Memory(MemoryInstr::MemoryCopy)),
                         0x0B => Ok(Instr::Memory(MemoryInstr::MemoryFill)),
+
+                        0x0C => Ok(Instr::Table(TableInstr::Init(TableIdx::parse(reader)?, ElemIdx::parse(reader)?))),
+                        0x0D => Ok(Instr::Table(TableInstr::Drop(ElemIdx::parse(reader)?))),
+                        0x0E => Ok(Instr::Table(TableInstr::Copy(TableIdx::parse(reader)?, TableIdx::parse(reader)?))),
+                        0x0F => Ok(Instr::Table(TableInstr::Grow(TableIdx::parse(reader)?))),
+                        0x10 => Ok(Instr::Table(TableInstr::Size(TableIdx::parse(reader)?))),
+                        0x11 => Ok(Instr::Table(TableInstr::Fill(TableIdx::parse(reader)?))),
 
                         // TODO: two bytes!!!
                         _ => Err(InstrParseErr::InvalidInstr(byte))
