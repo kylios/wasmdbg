@@ -157,6 +157,31 @@ impl From<&Leb128<i64>> for i64 {
     }
 }
 
+impl Parseable for Leb128<i128> {
+    fn parse(_reader: &mut BufReader<dyn ReadSeek>) -> Result<Leb128<i128>> {
+        // TODO
+        Ok(Leb128(0))
+    }
+}
+
+impl Display for Leb128<i128> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl From<Leb128<i128>> for i128 {
+    fn from(value: Leb128<i128>) -> Self {
+        value.0
+    }
+}
+
+impl From<&Leb128<i128>> for i128 {
+    fn from(value: &Leb128<i128>) -> Self {
+        value.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
